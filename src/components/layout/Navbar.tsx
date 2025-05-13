@@ -59,10 +59,20 @@ const Navbar = () => {
           >
             {language === 'ko' ? 'EN' : 'KO'}
           </button>
-          <Link href="#" className="btn-secondary text-sm">
+          <Link
+            href="https://tally.so/r/wgpB11"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-secondary text-sm"
+          >
             {getTextByLanguage(translations.common.scheduleCall, language)}
           </Link>
-          <Link href="#" className="btn-primary text-sm">
+          <Link
+            href="https://tally.so/r/wgpB11"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary text-sm"
+          >
             {getTextByLanguage(translations.common.getDemo, language)}
           </Link>
         </div>

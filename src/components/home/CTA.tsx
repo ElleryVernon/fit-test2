@@ -31,14 +31,18 @@ const CTA = () => {
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Shimmer>
               <Link
-                href="#"
+                href="https://tally.so/r/wgpB11"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="btn-primary text-lg px-10 py-5 text-center inline-block"
               >
                 {getTextByLanguage(translations.cta.buttonText, language)}
               </Link>
             </Shimmer>
             <Link
-              href="#"
+              href="https://tally.so/r/wgpB11"
+              target="_blank"
+              rel="noopener noreferrer"
               className="btn-secondary text-lg px-10 py-5 text-center inline-block"
             >
               {getTextByLanguage(translations.common.scheduleCall, language)}
