@@ -2,11 +2,8 @@
 
 import React from 'react';
 import FadeUp from '../animations/FadeUp';
-// import Shimmer from '../animations/Shimmer';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { translations } from '@/utils/translations';
-import { getTextByLanguage } from '@/utils/languageUtils';
 
 const Hero = () => {
   const { language } = useLanguage();
@@ -29,57 +26,31 @@ const Hero = () => {
 
           {/* 메인 헤드라인 */}
           <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            {getTextByLanguage(translations.hero.title, language)}
+            Build Smarter. Train Harder.
           </h2>
+          <h3 className="text-xl md:text-3xl font-semibold mb-8 text-gray-300">
+            The performance platform for athlete-led studios
+          </h3>
 
           {/* 서브 헤드라인 */}
-          <p className="text-xl md:text-2xl text-gray-300 mb-10">
-            {getTextByLanguage(translations.hero.subtitle, language)}
+          <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-3xl mx-auto">
+            We transform training logs into programs, fans into customers, and
+            studios into automated systems — helping athlete-coaches scale their
+            business without burning out.
           </p>
 
           {/* CTA 버튼 */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {/* <Shimmer> */}
-            <Link href="#" className="btn-primary text-lg px-8 py-4">
-              {getTextByLanguage(translations.common.getDemo, language)}
-            </Link>
-            {/* </Shimmer> */}
-            <Link href="#" className="btn-secondary text-lg px-8 py-4">
-              {getTextByLanguage(translations.common.scheduleCall, language)}
+            <Link
+              href="https://tally.so/r/wgpB11"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary text-lg !px-8 !py-4"
+            >
+              {language === 'ko' ? '시작하기' : 'Get Started'}
             </Link>
           </div>
         </FadeUp>
-
-        {/* 히어로 이미지 */}
-        {/* <FadeUp delay={0.2} className="mt-16 max-w-5xl mx-auto">
-          <Shimmer>
-            <div className="bg-gray-900 rounded-lg overflow-hidden shadow-2xl border border-gray-800 p-4">
-              <div className="aspect-video bg-gray-800 rounded-md flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-fitculator-primary to-fitculator-secondary flex items-center justify-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-12 w-12 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                  </div>
-                  <p className="text-xl text-gray-300">
-                    {getTextByLanguage(translations.hero.imageAlt, language)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Shimmer>
-        </FadeUp> */}
       </div>
     </section>
   );

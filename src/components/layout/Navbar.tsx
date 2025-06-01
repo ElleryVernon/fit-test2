@@ -3,8 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { translations } from '@/utils/translations';
-import { getTextByLanguage } from '@/utils/languageUtils';
 
 const Navbar = () => {
   const { language, setLanguage } = useLanguage();
@@ -39,16 +37,10 @@ const Navbar = () => {
           </Link>
           <div className="hidden md:flex ml-6 space-x-6">
             <Link href="#features" className="text-gray-300 hover:text-white">
-              {getTextByLanguage(translations.navbar.features, language)}
+              {language === 'ko' ? '가치 제안' : 'Value Proposition'}
             </Link>
-            <Link href="#usecases" className="text-gray-300 hover:text-white">
-              {getTextByLanguage(translations.navbar.useCases, language)}
-            </Link>
-            <Link href="#vision" className="text-gray-300 hover:text-white">
-              {getTextByLanguage(translations.navbar.vision, language)}
-            </Link>
-            <Link href="#" className="text-gray-300 hover:text-white">
-              {getTextByLanguage(translations.navbar.pricing, language)}
+            <Link href="#visualdemo" className="text-gray-300 hover:text-white">
+              {language === 'ko' ? '비주얼 데모' : 'Visual Demo'}
             </Link>
           </div>
         </div>
@@ -63,17 +55,9 @@ const Navbar = () => {
             href="https://tally.so/r/wgpB11"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-secondary text-sm"
-          >
-            {getTextByLanguage(translations.common.scheduleCall, language)}
-          </Link>
-          <Link
-            href="https://tally.so/r/wgpB11"
-            target="_blank"
-            rel="noopener noreferrer"
             className="btn-primary text-sm"
           >
-            {getTextByLanguage(translations.common.getDemo, language)}
+            {language === 'ko' ? '시작하기' : 'Get Started'}
           </Link>
         </div>
       </div>
