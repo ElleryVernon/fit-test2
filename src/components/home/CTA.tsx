@@ -19,7 +19,7 @@ const CTA = () => {
       <div className="container mx-auto px-4 relative z-10">
         <FadeUp className="text-center max-w-4xl mx-auto">
           <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            Start with HYROX. Scale beyond.
+            Start with Hybrid Training. Scale beyond.
           </h2>
           <p className="text-xl md:text-2xl text-gray-300 mb-10">
             Fitculator is built for high-performance athlete-coaches, starting
