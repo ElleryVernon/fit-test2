@@ -79,7 +79,7 @@ const VisualDemo = () => {
                 <p className="text-gray-400">
                   {language === 'ko'
                     ? '팬들이 선수의 일상 훈련에 참여하고 구독할 수 있는 직관적인 인터페이스입니다.'
-                    : 'Intuitive interface for fans to engage with and subscribe to an athlete&apos;s daily training.'}
+                    : "Intuitive interface for fans to engage with and subscribe to an athlete's daily training."}
                 </p>
               </div>
             </div>
