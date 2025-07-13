@@ -51,12 +51,7 @@ const Navbar = () => {
           >
             {language === 'ko' ? 'EN' : 'KO'}
           </button>
-          <Link
-            href="https://tally.so/r/wgpB11"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary text-sm"
-          >
+          <Link href="/request-demo" className="btn-primary text-sm">
             {language === 'ko' ? '시작하기' : 'Get Started'}
           </Link>
         </div>

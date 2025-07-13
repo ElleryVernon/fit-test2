@@ -42,9 +42,7 @@ const Hero = () => {
           {/* CTA 버튼 */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="https://tally.so/r/wgpB11"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/request-demo"
               className="btn-primary text-lg !px-8 !py-4"
             >
               {language === 'ko' ? '시작하기' : 'Get Started'}

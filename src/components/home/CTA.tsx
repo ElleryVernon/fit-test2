@@ -30,9 +30,7 @@ const CTA = () => {
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Shimmer>
               <Link
-                href="https://tally.so/r/wgpB11"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/request-demo"
                 className="btn-primary text-lg px-10 py-5 text-center inline-block"
               >
                 {language === 'ko' ? '함께 시작하기 →' : 'Join the Movement →'}

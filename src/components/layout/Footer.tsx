@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { translations } from '@/utils/translations';
 import { getTextByLanguage } from '@/utils/languageUtils';
+import NewsletterForm from '../newsletter/NewsletterForm';
 
 const Footer = () => {
   const { language } = useLanguage();
@@ -23,18 +24,7 @@ const Footer = () => {
               ? '최신 뉴스, 제품 업데이트 및 피트니스 산업 인사이트를 받아보세요.'
               : 'Get the latest news, product updates, and fitness industry insights delivered to your inbox.'}
           </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <input
-              type="email"
-              placeholder={
-                language === 'ko' ? '이메일 주소' : 'Your email address'
-              }
-              className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-fitculator-secondary"
-            />
-            <button className="btn-primary">
-              {language === 'ko' ? '구독하기' : 'Subscribe'}
-            </button>
-          </div>
+          <NewsletterForm origin="footer" />
         </div>
 
         {/* 푸터 링크 섹션 */}
