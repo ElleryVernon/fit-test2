@@ -225,7 +225,10 @@ const Footer = () => {
             <Link href="#" className="text-gray-400 hover:text-white text-sm">
               {getTextByLanguage(translations.footer.links.terms, language)}
             </Link>
-            <Link href="#" className="text-gray-400 hover:text-white text-sm">
+            <Link
+              href="/privacy-policy"
+              className="text-gray-400 hover:text-white text-sm"
+            >
               {getTextByLanguage(translations.footer.links.privacy, language)}
             </Link>
             <Link href="#" className="text-gray-400 hover:text-white text-sm">
