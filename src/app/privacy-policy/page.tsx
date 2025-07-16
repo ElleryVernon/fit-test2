@@ -1,5 +1,6 @@
 'use client';
 
+/* eslint-disable react/no-unescaped-entities */
 import React from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -16,8 +17,11 @@ interface PrivacyPolicyItem {
   };
 }
 
+type LanguageType = 'ko' | 'en';
+
 const PrivacyPolicy = () => {
   const { language } = useLanguage();
+  const currentLanguage = language as LanguageType;
 
   const privacyPolicyItems: PrivacyPolicyItem[] = [
     {
@@ -28,28 +32,30 @@ const PrivacyPolicy = () => {
       content: {
         ko: (
           <>
-            핏큘레이터(이하 '회사' 라고 함)는 회사가 제공하고자 하는 서비스(이하
-            '회사 서비스')를 이용하는 개인(이하 '이용자' 또는 '개인')의
-            정보(이하 '개인정보')를 보호하기 위해, 개인정보보호법, 정보통신망
-            이용촉진 및 정보보호 등에 관한 법률(이하 '정보통신망법') 등 관련
-            법령을 준수하고, 서비스 이용자의 개인정보 보호 관련한 고충을
+            핏큘레이터(이하 &apos;회사&apos; 라고 함)는 회사가 제공하고자 하는
+            서비스(이하 &apos;회사 서비스&apos;)를 이용하는 개인(이하
+            &apos;이용자&apos; 또는 &apos;개인&apos;)의 정보(이하
+            &apos;개인정보&apos;)를 보호하기 위해, 개인정보보호법, 정보통신망
+            이용촉진 및 정보보호 등에 관한 법률(이하 &apos;정보통신망법&apos;)
+            등 관련 법령을 준수하고, 서비스 이용자의 개인정보 보호 관련한 고충을
             신속하고 원활하게 처리할 수 있도록 하기 위하여 다음과 같이
-            개인정보처리방침(이하 '본 방침')을 수립합니다.
+            개인정보처리방침(이하 &apos;본 방침&apos;)을 수립합니다.
           </>
         ),
         en: (
           <>
-            Fitculator (hereinafter referred to as the "Company") establishes
-            the following Privacy Policy (hereinafter referred to as the
-            "Policy") in order to protect the information (hereinafter referred
-            to as "personal information") of individuals (hereinafter referred
-            to as "users" or "individuals") who use the services that the
-            Company intends to provide (hereinafter referred to as "Company
-            services"), comply with relevant laws such as the Personal
+            Fitculator (hereinafter referred to as the &quot;Company&quot;)
+            establishes the following Privacy Policy (hereinafter referred to as
+            the &quot;Policy&quot;) in order to protect the information
+            (hereinafter referred to as &quot;personal information&quot;) of
+            individuals (hereinafter referred to as &quot;users&quot; or
+            &quot;individuals&quot;) who use the services that the Company
+            intends to provide (hereinafter referred to as &quot;Company
+            services&quot;), comply with relevant laws such as the Personal
             Information Protection Act and the Act on Promotion of Information
             and Communications Network Utilization and Information Protection
-            (hereinafter referred to as the "Information and Communications
-            Network Act"), and to promptly and smoothly handle grievances
+            (hereinafter referred to as the &quot;Information and Communications
+            Network Act&quot;), and to promptly and smoothly handle grievances
             related to the protection of personal information of service users.
           </>
         ),
@@ -829,8 +835,9 @@ const PrivacyPolicy = () => {
                   광고성 정보를 전송하려는 경우
                 </li>
                 <li>
-                  「방문판매 등에 관한 법률」에 따른 전화권유판매자가 육성으로
-                  수신자에게 개인정보의 수집출처를 고지하고 전화권유를 하는 경우
+                  &lsquo;방문판매 등에 관한 법률&rsquo;에 따른 전화권유판매자가
+                  육성으로 수신자에게 개인정보의 수집출처를 고지하고 전화권유를
+                  하는 경우
                 </li>
               </ul>
               <li>
@@ -903,9 +910,9 @@ const PrivacyPolicy = () => {
                   6 months from the date the transaction ended
                 </li>
                 <li>
-                  When a telemarketing seller under the "Door-to-Door Sales Act"
-                  verbally notifies the recipient of the source of personal
-                  information collection and makes telemarketing calls
+                  When a telemarketing seller under the &quot;Door-to-Door Sales
+                  Act&quot; verbally notifies the recipient of the source of
+                  personal information collection and makes telemarketing calls
                 </li>
               </ul>
               <li>
@@ -1679,15 +1686,17 @@ const PrivacyPolicy = () => {
       <Navbar />
       <main className="flex-grow container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8 text-center">
-          {language === 'ko' ? '개인정보처리방침' : 'Privacy Policy'}
+          {currentLanguage === 'ko' ? '개인정보처리방침' : 'Privacy Policy'}
         </h1>
         <div className="space-y-8">
           {privacyPolicyItems.map((item, index) => (
             <div key={index} className="border-b pb-6">
               <h2 className="text-xl font-semibold mb-4">
-                {item.title[language]}
+                {item.title[currentLanguage]}
               </h2>
-              <div className="text-gray-700">{item.content[language]}</div>
+              <div className="text-gray-700">
+                {item.content[currentLanguage]}
+              </div>
             </div>
           ))}
         </div>
