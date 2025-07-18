@@ -67,7 +67,7 @@ export default function NewsletterForm({ origin }: NewsletterFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full">
+    <form onSubmit={handleSubmit} className="w-full max-w-md">
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-grow relative">
           <input
