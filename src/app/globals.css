@@ -1,11 +1,11 @@
 @import 'tailwindcss';
 
 :root {
-  --background: #0d1117;
-  --foreground: #ffffff;
-  --primary: #0066cc;
-  --secondary: #00cccc;
-  --accent: #00cc99;
+  --background: #000808; /* hyrox-black */
+  --foreground: #ffffff; /* text-light */
+  --primary: #00c4cc; /* fitculator-blue */
+  --secondary: #1ba8d3; /* fitculator-blue-dark */
+  --accent: #7de0ff; /* fitculator-blue-light */
   --coral: #ff6b6b;
 }
 
@@ -25,7 +25,7 @@ body {
 }
 
 .btn-primary {
-  background-color: var(--accent);
+  background-color: var(--primary);
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 0.375rem;
@@ -34,9 +34,9 @@ body {
 }
 
 .btn-primary:hover {
-  background-color: #00b388;
+  background-color: #1ba8d3; /* fitculator-blue-dark */
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 204, 153, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 196, 204, 0.3);
 }
 
 .btn-secondary {
@@ -50,9 +50,14 @@ body {
 }
 
 .btn-secondary:hover {
-  background-color: rgba(0, 204, 204, 0.1);
+  background-color: rgba(
+    27,
+    168,
+    211,
+    0.1
+  ); /* fitculator-blue-dark with opacity */
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 204, 204, 0.2);
+  box-shadow: 0 4px 12px rgba(27, 168, 211, 0.2);
 }
 
 .gradient-text {
