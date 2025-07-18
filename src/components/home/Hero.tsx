@@ -3,6 +3,7 @@
 import React from 'react';
 import FadeUp from '../animations/FadeUp';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { translations } from '@/utils/translations';
 import { getTextByLanguage } from '@/utils/languageUtils';
@@ -47,6 +48,18 @@ const Hero = () => {
             >
               {getTextByLanguage(translations.hero.cta, language)}
             </Link>
+          </div>
+
+          {/* Garmin 파트너십 */}
+          <div className="mt-8 flex items-center justify-center gap-3">
+            <p className="text-gray-300">Officially partnered with</p>
+            <Image
+              src="/Garmin Logo Without Delta-white-low-res.png"
+              alt="Garmin Logo"
+              width={100}
+              height={30}
+              className="object-contain"
+            />
           </div>
         </FadeUp>
       </div>
