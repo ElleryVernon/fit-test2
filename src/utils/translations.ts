@@ -28,6 +28,7 @@ export const translations: {
   hero: {
     title: TextByLanguage;
     subtitle: TextByLanguage;
+    description: TextByLanguage;
     cta: TextByLanguage;
     imageAlt: TextByLanguage;
   };
@@ -143,16 +144,20 @@ export const translations: {
   },
   hero: {
     title: {
-      en: 'AI-Powered Data Analytics SaaS for Boutique Fitness Owners to Reduce Customer Churn.',
-      ko: '부티크 피트니스를 위한 AI 기반 회원 이탈 방지 데이터 분석 SaaS',
+      en: 'Build Smarter, Train Harder.',
+      ko: '더 스마트하게 구축하고, 더 열심히 훈련하세요.',
     },
     subtitle: {
-      en: 'Reduce Churn. Boost Engagement. Maximize Revenue.',
-      ko: '이탈률 감소. 참여도 향상. 수익 극대화.',
+      en: 'The performance platform for athlete-led studios',
+      ko: '선수의 피트니스 비즈니스를 위한 퍼포먼스 플랫폼',
+    },
+    description: {
+      en: 'We transform training logs into programs, fans into customers, and studios into automated systems — helping athlete-coaches scale their business without burning out.',
+      ko: '우리는 트레이닝 로그를 프로그램으로, 팬을 고객으로, 피트니스 비즈니스를 자동화된 시스템으로 만들어 선수 출신 코치들이 번아웃 없이 비즈니스를 확장할 수 있도록 돕습니다.',
     },
     cta: {
-      en: 'Get Started',
-      ko: '시작하기',
+      en: 'Request Demo',
+      ko: '데모 요청',
     },
     imageAlt: {
       en: 'Minimal gradient or boutique fitness space image placeholder',
@@ -288,7 +293,7 @@ export const translations: {
     },
     buttonText: {
       en: 'Get Started Today',
-      ko: '지금 시작하기',
+      ko: '바로 시작하기',
     },
   },
   footer: {

@@ -4,6 +4,8 @@ import React from 'react';
 import FadeUp from '../animations/FadeUp';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { translations } from '@/utils/translations';
+import { getTextByLanguage } from '@/utils/languageUtils';
 
 const Hero = () => {
   const { language } = useLanguage();
@@ -26,17 +28,15 @@ const Hero = () => {
 
           {/* 메인 헤드라인 */}
           <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            Build Smarter. Train Harder.
+            {getTextByLanguage(translations.hero.title, language)}
           </h2>
           <h3 className="text-xl md:text-3xl font-semibold mb-8 text-gray-300">
-            The performance platform for athlete-led studios
+            {getTextByLanguage(translations.hero.subtitle, language)}
           </h3>
 
           {/* 서브 헤드라인 */}
           <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-3xl mx-auto">
-            We transform training logs into programs, fans into customers, and
-            studios into automated systems — helping athlete-coaches scale their
-            business without burning out.
+            {getTextByLanguage(translations.hero.description, language)}
           </p>
 
           {/* CTA 버튼 */}
@@ -45,7 +45,7 @@ const Hero = () => {
               href="/request-demo"
               className="btn-primary text-lg !px-8 !py-4"
             >
-              {language === 'ko' ? '시작하기' : 'Get Started'}
+              {getTextByLanguage(translations.hero.cta, language)}
             </Link>
           </div>
         </FadeUp>

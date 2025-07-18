@@ -52,7 +52,7 @@ const Navbar = () => {
             {language === 'ko' ? 'EN' : 'KO'}
           </button>
           <Link href="/request-demo" className="btn-primary text-sm">
-            {language === 'ko' ? '시작하기' : 'Get Started'}
+            {language === 'ko' ? '데모 요청' : 'Request Demo'}
           </Link>
         </div>
       </div>

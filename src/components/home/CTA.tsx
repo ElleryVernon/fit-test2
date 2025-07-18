@@ -33,7 +33,7 @@ const CTA = () => {
                 href="/request-demo"
                 className="btn-primary text-lg px-10 py-5 text-center inline-block"
               >
-                {language === 'ko' ? '함께 시작하기 →' : 'Join the Movement →'}
+                {language === 'ko' ? '함께 시작하기' : 'Join the Movement'}
               </Link>
             </Shimmer>
           </div>
