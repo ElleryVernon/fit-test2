@@ -319,8 +319,8 @@ export const translations: {
         ko: '연락처',
       },
       privacy: {
-        en: 'Privacy',
-        ko: '개인정보 보호',
+        en: 'Privacy Policy',
+        ko: '개인정보 보호정책',
       },
       terms: {
         en: 'Terms',
