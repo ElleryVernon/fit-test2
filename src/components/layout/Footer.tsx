@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { translations } from '@/utils/translations';
 import { getTextByLanguage } from '@/utils/languageUtils';
@@ -15,9 +16,7 @@ const Footer = () => {
         {/* 뉴스레터 구독 섹션 */}
         <div className="mb-12">
           <h3 className="text-xl font-semibold mb-2">
-            {language === 'ko'
-              ? 'Fitculator 소식 받기'
-              : 'Stay updated with Fitculator'}
+            {language === 'ko' ? '소식 받기' : 'Stay updated'}
           </h3>
           <p className="text-gray-400 mb-4">
             {language === 'ko'
@@ -25,6 +24,46 @@ const Footer = () => {
               : 'Get the latest news, product updates, and fitness industry insights delivered to your inbox.'}
           </p>
           <NewsletterForm origin="footer" />
+        </div>
+
+        {/* 앱 다운로드 섹션 */}
+        <div className="mb-12">
+          <h3 className="text-xl font-semibold mb-2">
+            {language === 'ko' ? '앱 다운로드' : 'Download the App'}
+          </h3>
+          <p className="text-gray-400 mb-4">
+            {language === 'ko'
+              ? '언제 어디서나 Fitculator를 이용하세요. 앱을 다운로드하고 더 나은 피트니스 경험을 시작하세요.'
+              : 'Use Fitculator anywhere, anytime. Download our app and start a better fitness experience.'}
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <a
+              href="https://apps.apple.com/kr/app/fitculator/id6741475753?l=en-GB"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block"
+            >
+              <Image
+                src="/assets/images/Download_on_the_App_Store_Badge_US.svg"
+                alt="Download on the App Store"
+                width={140}
+                height={42}
+              />
+            </a>
+            <a
+              href="https://play.google.com/store/apps/details?id=com.fitculator.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block"
+            >
+              <Image
+                src="/assets/images/GetItOnGooglePlay_Badge_Web_color_English.png"
+                alt="Get it on Google Play"
+                width={155}
+                height={42}
+              />
+            </a>
+          </div>
         </div>
 
         {/* 푸터 링크 섹션 */}
