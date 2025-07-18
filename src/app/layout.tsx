@@ -15,14 +15,16 @@ const geistMono = Geist_Mono({
 });
 
 // Google Tag Manager ID
-const GTM_ID = process.env
-  .GOOGLE_TAG_MANAGER_ID as string;
+const GTM_ID = process.env.GOOGLE_TAG_MANAGER_ID as string;
 
 // 메타데이터는 서버 컴포넌트에서만 사용 가능
 export const metadata: Metadata = {
   title: 'Fitculator: AI-Powered Exercise Intelligence',
   description:
     'Fitculator is the first AI-powered platform that precisely quantifies both aerobic and strength training to boost member retention for boutique fitness studios.',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 // 루트 레이아웃 컴포넌트
