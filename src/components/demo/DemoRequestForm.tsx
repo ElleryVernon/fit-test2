@@ -75,7 +75,7 @@ export default function DemoRequestForm({ origin }: DemoRequestFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-lg mx-auto flex flex-col gap-6"
+      className="max-w-lg mx-auto mb-24 flex flex-col gap-6"
     >
       <div className="flex flex-col gap-2">
         <label className="text-white font-medium">
