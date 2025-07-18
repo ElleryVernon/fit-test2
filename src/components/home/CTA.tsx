@@ -5,6 +5,7 @@ import Link from 'next/link';
 import FadeUp from '../animations/FadeUp';
 import Shimmer from '../animations/Shimmer';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { translations } from '@/utils/translations';
 
 const CTA = () => {
   const { language } = useLanguage();
@@ -18,12 +19,25 @@ const CTA = () => {
 
       <div className="container mx-auto px-4 relative z-10">
         <FadeUp className="text-center max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            Start with Hybrid Training. Scale beyond.
+          <h2
+            className={`font-bold mb-6 ${
+              language === 'ko'
+                ? 'text-2xl md:text-4xl'
+                : 'text-3xl md:text-5xl'
+            }`}
+          >
+            {language === 'ko'
+              ? translations.cta.title.ko
+              : translations.cta.title.en}
           </h2>
-          <p className="text-xl md:text-2xl text-gray-300 mb-10">
-            Fitculator is built for high-performance athlete-coaches, starting
-            with the world&apos;s fastest-growing fitness sport.
+          <p
+            className={`text-gray-300 mb-10 ${
+              language === 'ko' ? 'text-lg md:text-xl' : 'text-xl md:text-2xl'
+            }`}
+          >
+            {language === 'ko'
+              ? translations.cta.subtitle.ko
+              : translations.cta.subtitle.en}
           </p>
 
           {/* CTA 버튼 */}
@@ -33,7 +47,9 @@ const CTA = () => {
                 href="/request-demo"
                 className="btn-primary text-lg px-10 py-5 text-center inline-block"
               >
-                {language === 'ko' ? '함께 시작하기' : 'Join the Movement'}
+                {language === 'ko'
+                  ? translations.cta.buttonText.ko
+                  : translations.cta.buttonText.en}
               </Link>
             </Shimmer>
           </div>

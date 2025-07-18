@@ -284,12 +284,12 @@ export const translations: {
   },
   cta: {
     title: {
-      en: 'Ready to Transform Your Fitness Business?',
-      ko: '피트니스 비즈니스를 혁신할 준비가 되셨나요?',
+      en: 'Start with Hybrid Training. Scale beyond.',
+      ko: '하이브리드 트레이닝부터 시작해 그 이상으로 확장합니다.',
     },
     subtitle: {
-      en: 'Join the leading boutique studios already using Fitculator to boost retention and maximize revenue.',
-      ko: 'Fitculator를 사용하여 회원 유지율을 높이고 수익을 극대화하는 선도적인 부티크 스튜디오에 합류하세요.',
+      en: "Fitculator is built for high-performance athlete-coaches, starting with the world's fastest-growing fitness sport.",
+      ko: 'Fitculator는 세계에서 가장 빠르게 성장하고 있는 피트니스 스포츠부터 시작해 선수와 코치를 위해 만들어졌습니다.',
     },
     buttonText: {
       en: 'Get Started Today',
