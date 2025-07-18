@@ -50,7 +50,7 @@ const Hero = () => {
             </Link>
           </div>
 
-          {/* Garmin 파트너십 */}
+          {/* 파트너십 */}
           <div className="mt-8 flex items-center justify-center gap-3">
             <p className="text-gray-300">Officially partnered with</p>
             <Image
@@ -58,6 +58,13 @@ const Hero = () => {
               alt="Garmin Logo"
               width={100}
               height={30}
+              className="object-contain"
+            />
+            <Image
+              src="/Amazfit_logo_white.png"
+              alt="Amazfit Logo"
+              width={90}
+              height={27}
               className="object-contain"
             />
           </div>
