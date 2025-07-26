@@ -5,6 +5,53 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
 
+// 햄버거 메뉴 아이콘 스타일
+const hamburgerStyle = `
+  .hamburger-icon {
+    width: 24px;
+    height: 24px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .hamburger-icon .line {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background-color: white;
+    position: absolute;
+    left: 0;
+    transition: all 0.3s ease-in-out;
+  }
+
+  .hamburger-icon .line-1 {
+    top: 4px;
+  }
+
+  .hamburger-icon .line-2 {
+    top: 12px;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .hamburger-icon .line-3 {
+    top: 20px;
+  }
+
+  .hamburger-icon.open .line-1 {
+    transform: translateY(8px) rotate(45deg);
+  }
+
+  .hamburger-icon.open .line-2 {
+    opacity: 0;
+  }
+
+  .hamburger-icon.open .line-3 {
+    transform: translateY(-8px) rotate(-45deg);
+  }
+`;
+
 const Navbar = () => {
   const { language, setLanguage } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -15,9 +62,10 @@ const Navbar = () => {
   };
   return (
     <nav className="top-0 left-0 right-0 z-50 bg-[#0d1117] text-white py-4 w-full overflow-x-hidden">
+      <style jsx>{hamburgerStyle}</style>
       <div className="container mx-auto px-4 sm:px-6 w-full max-w-full md:max-w-5xl flex items-center justify-between min-w-0">
         <div className="flex items-center min-w-0 flex-shrink">
-          <Link href="/" className="flex pl-1 items-center flex-shrink-0">
+          <Link href="/" className="flex pl-2 items-center flex-shrink-0">
             <Image
               src="/fitculator_logo_wh.svg"
               alt="Fitculator Logo"
@@ -59,7 +107,7 @@ const Navbar = () => {
           </button>
           <Link
             href="/request-demo"
-            className="btn-primary text-xs sm:text-sm text-bold px-2 py-1 rounded-none whitespace-nowrap flex-shrink-0"
+            className="hidden md:block btn-primary text-xs sm:text-sm text-bold px-2 py-1 rounded-none whitespace-nowrap flex-shrink-0"
           >
             {language === 'ko' ? '데모 요청' : 'BOOK A DEMO'}
           </Link>
@@ -69,30 +117,13 @@ const Navbar = () => {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              {mobileMenuOpen ? (
-                <>
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </>
-              ) : (
-                <>
-                  <line x1="3" y1="12" x2="21" y2="12"></line>
-                  <line x1="3" y1="6" x2="21" y2="6"></line>
-                  <line x1="3" y1="18" x2="21" y2="18"></line>
-                </>
-              )}
-            </svg>
+            <div className="w-[30px] h-[30px] relative flex items-center justify-center">
+              <div className={`hamburger-icon ${mobileMenuOpen ? 'open' : ''}`}>
+                <span className="line line-1"></span>
+                <span className="line line-2"></span>
+                <span className="line line-3"></span>
+              </div>
+            </div>
           </button>
         </div>
       </div>
@@ -103,25 +134,25 @@ const Navbar = () => {
           <div className="container mx-auto px-4 py-3 space-y-3 max-w-full">
             <Link
               href="#features"
-              className="block text-gray-300 hover:text-white py-2"
+              className="block text-gray-300 hover:text-white py-2 rounded-none"
               onClick={() => setMobileMenuOpen(false)}
             >
               {language === 'ko' ? '가치 제안' : 'Value Proposition'}
             </Link>
             <Link
               href="#visualdemo"
-              className="block text-gray-300 hover:text-white py-2"
+              className="block text-gray-300 hover:text-white py-2 rounded-none"
               onClick={() => setMobileMenuOpen(false)}
             >
               {language === 'ko' ? '비주얼 데모' : 'Visual Demo'}
             </Link>
-            {/* 모바일 버전 - 햨버거 메뉴 안에 언어 선택 */}
+            {/* 모바일 버전 - 햄버거 메뉴 안에 언어 선택 */}
             <button
               onClick={() => {
                 toggleLanguage();
                 setMobileMenuOpen(false);
               }}
-              className="flex items-center text-gray-300 hover:text-white py-2 w-full"
+              className="flex items-center text-gray-300 hover:text-white py-2 w-full rounded-none"
             >
               <Image
                 src="/globe.svg"
@@ -132,6 +163,14 @@ const Navbar = () => {
               />
               <span>{language === 'ko' ? 'English' : '한국어'}</span>
             </button>
+            {/* 모바일 버전 - 햄버거 메뉴 안에 데모 요청 버튼 */}
+            <Link
+              href="/request-demo"
+              className="block text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 py-2 px-3 mt-2 text-center rounded-none"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {language === 'ko' ? '데모 요청' : 'BOOK A DEMO'}
+            </Link>
           </div>
         </div>
       )}
