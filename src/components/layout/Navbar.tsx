@@ -17,10 +17,14 @@ const Navbar = () => {
     <nav className="top-0 left-0 right-0 z-50 bg-[#0d1117] text-white py-4">
       <div className="container mx-auto px-4 sm:px-6 max-w-full md:max-w-5xl flex items-center justify-between">
         <div className="flex items-center">
-          <Link href="/" className="flex items-center flex-shrink-0">
-            <span className="text-2xl pl-1 sm:text-2xl md:text-4xl font-bold gradient-text">
-              Fitculator
-            </span>
+          <Link href="/" className="flex pl-1 items-center flex-shrink-0">
+            <Image
+              src="/fitculator_logo_wh.svg"
+              alt="Fitculator Logo"
+              width={160}
+              height={20}
+              className="object-contain"
+            />
           </Link>
         </div>
         <div className="flex items-center space-x-2 flex-shrink-0">
