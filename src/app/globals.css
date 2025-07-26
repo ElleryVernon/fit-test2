@@ -69,3 +69,13 @@ body {
 .gradient-bg {
   background: linear-gradient(90deg, var(--primary), var(--secondary));
 }
+
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+.container {
+  max-width: 100%;
+}
