@@ -100,7 +100,7 @@ export const translations: {
 } = {
   common: {
     getDemo: {
-      en: 'Request Demo',
+      en: 'BOOK A DEMO',
       ko: '데모 요청',
     },
     scheduleCall: {
@@ -156,7 +156,7 @@ export const translations: {
       ko: '우리는 트레이닝 로그를 프로그램으로, 팬을 고객으로, 피트니스 비즈니스를 자동화된 시스템으로 만들어 선수 출신 코치들이 번아웃 없이 비즈니스를 확장할 수 있도록 돕습니다.',
     },
     cta: {
-      en: 'Request Demo',
+      en: 'BOOK A DEMO',
       ko: '데모 요청',
     },
     imageAlt: {
