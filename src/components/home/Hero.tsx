@@ -53,7 +53,7 @@ const Hero = () => {
           </h2>
 
           {/* 서브 헤드라인 */}
-          <p className="text-md md:text-xl text-gray-300 mb-10 mx-auto max-w-3xl break-keep word-break-keep-all">
+          <p className="text-md md:text-xl text-gray-300 mb-10 mx-auto px-2 max-w-3xl break-keep word-break-keep-all">
             {getTextByLanguage(translations.hero.description, language)}
           </p>
 
@@ -61,14 +61,14 @@ const Hero = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/request-demo"
-              className="btn-primary text-lg !px-8 !py-4 w-3/5 max-w-xs mx-auto sm:w-auto"
+              className="btn-primary text-lg !px-8 !py-4 w-3/5 max-w-xs mb-10 mx-auto sm:w-auto"
             >
               {getTextByLanguage(translations.hero.cta, language)}
             </Link>
           </div>
 
           {/* 파트너십 */}
-          <div className="mt-8 flex flex-col items-center gap-3 md:flex-row md:items-baseline md:justify-center max-w-full">
+          <div className="flex flex-col items-center gap-3 md:flex-row md:items-baseline md:justify-center max-w-full">
             <p className="text-gray-300 text-center">
               Officially partnered with
             </p>
