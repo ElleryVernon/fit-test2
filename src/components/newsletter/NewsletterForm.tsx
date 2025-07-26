@@ -78,7 +78,7 @@ export default function NewsletterForm({ origin }: NewsletterFormProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={isLoading || isSuccess}
-            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-fitculator-secondary"
+            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-fitculator-secondary"
           />
           {/* Honeypot 필드 (숨김) - 스팸 방지 */}
           <input
