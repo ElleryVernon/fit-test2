@@ -41,7 +41,20 @@ const Hero = () => {
                 </span>
               </>
             ) : (
-              getTextByLanguage(translations.hero.title, language)
+              <>
+                <span className="block md:inline">
+                  {getTextByLanguage(translations.hero.title, language).split(
+                    ','
+                  )[0] + ','}
+                </span>
+                <span className="block md:inline mt-2 md:mt-0">
+                  {
+                    getTextByLanguage(translations.hero.title, language).split(
+                      ','
+                    )[1]
+                  }
+                </span>
+              </>
             )}
           </h2>
 
