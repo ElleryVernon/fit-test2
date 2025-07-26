@@ -144,16 +144,16 @@ export const translations: {
   },
   hero: {
     title: {
-      en: 'Build Smarter, Train Harder',
-      ko: '더 스마트하게 구축하고, 더 열심히 훈련하세요',
+      en: 'Train Hard, Grow Fast',
+      ko: '더 열심히 훈련하고, 더 빠르게 성장하세요',
     },
     subtitle: {
-      en: 'The performance platform for athlete-led studios',
-      ko: '선수의 피트니스 비즈니스를 위한 퍼포먼스 플랫폼',
+      en: 'The performance platform for athlete-run fitness businesses',
+      ko: '선수를 위한 퍼포먼스 기반 피트니스 비즈니스 플랫폼',
     },
     description: {
-      en: 'We transform training logs into programs, fans into customers, and studios into automated systems — helping athlete-coaches scale their business without burning out.',
-      ko: '우리는 트레이닝 로그를 프로그램으로, 팬을 고객으로, 피트니스 비즈니스를 자동화된 시스템으로 만들어 선수 출신 코치들이 번아웃 없이 비즈니스를 확장할 수 있도록 돕습니다.',
+      en: 'Turn training logs into programs. Turn fans into customers. Grow your studio — without burning out.',
+      ko: '훈련 로그를 프로그램으로, 팬을 수익 고객으로, 스튜디오는 자동화된 시스템으로 전환하세요 — 번아웃 없이 비즈니스를 확장할 수 있도록 돕습니다.',
     },
     cta: {
       en: 'BOOK A DEMO',

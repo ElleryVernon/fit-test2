@@ -11,9 +11,9 @@ export default function RequestDemoPage() {
   return (
     <main className="bg-[#0d1117] min-h-screen text-white">
       {/* 네비게이션 바 아래 여백 */}
-      <div className="h-20"></div>
+      <div className="h-8 md:h-20"></div>
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 md:py-12">
         <div className="max-w-4xl mx-auto">
           {/* 뒤로 가기 링크 */}
           <Link
