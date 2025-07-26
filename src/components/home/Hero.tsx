@@ -67,7 +67,7 @@ const Hero = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/request-demo"
-              className="btn-primary text-lg !px-8 !py-4 w-1/2 mx-auto sm:w-auto"
+              className="btn-primary text-lg !px-8 !py-4 w-3/5 mx-auto sm:w-auto"
             >
               {getTextByLanguage(translations.hero.cta, language)}
             </Link>
