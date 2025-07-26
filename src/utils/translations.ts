@@ -144,8 +144,8 @@ export const translations: {
   },
   hero: {
     title: {
-      en: 'Build Smarter, Train Harder.',
-      ko: '더 스마트하게 구축하고, 더 열심히 훈련하세요.',
+      en: 'Build Smarter, Train Harder',
+      ko: '더 스마트하게 구축하고, 더 열심히 훈련하세요',
     },
     subtitle: {
       en: 'The performance platform for athlete-led studios',
