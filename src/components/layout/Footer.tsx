@@ -7,6 +7,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { translations } from '@/utils/translations';
 import { getTextByLanguage } from '@/utils/languageUtils';
 import NewsletterForm from '../newsletter/NewsletterForm';
+import { FaInstagram } from 'react-icons/fa';
+import { FaRegEnvelope } from 'react-icons/fa';
 
 const Footer = () => {
   const { language } = useLanguage();
@@ -14,20 +16,20 @@ const Footer = () => {
     <footer className="bg-[#0d1117] text-white py-16">
       <div className="container mx-auto px-4">
         {/* 뉴스레터 구독 섹션 */}
-        <div className="mb-12">
+        <div className="mb-12 text-center md:text-left">
           <h3 className="text-xl font-semibold mb-2">
             {language === 'ko' ? '소식 받기' : 'Stay updated'}
           </h3>
           <p className="text-gray-400 mb-4">
             {language === 'ko'
-              ? '최신 뉴스, 제품 업데이트 및 피트니스 산업 인사이트를 받아보세요.'
-              : 'Get the latest news, product updates, and fitness industry insights delivered to your inbox.'}
+              ? '최신 뉴스, 특별 프로모션, 제품 업데이트 및 피트니스 산업 인사이트를 받아보세요.'
+              : 'Sign up for the latest news, exclusive offers, product updates, and fitness industry insights delivered to your inbox.'}
           </p>
           <NewsletterForm origin="footer" />
         </div>
 
         {/* 앱 다운로드 섹션 */}
-        <div className="mb-12">
+        <div className="mb-12 text-center md:text-left">
           <h3 className="text-xl font-semibold mb-2">
             {language === 'ko' ? '앱 다운로드' : 'Download the App'}
           </h3>
@@ -36,7 +38,7 @@ const Footer = () => {
               ? '언제 어디서나 Fitculator를 이용하세요. 앱을 다운로드하고 더 나은 피트니스 경험을 시작하세요.'
               : 'Use Fitculator anywhere, anytime. Download our app and start a better fitness experience.'}
           </p>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 justify-center md:justify-start">
             <a
               href="https://apps.apple.com/kr/app/fitculator/id6741475753?l=en-GB"
               target="_blank"
@@ -248,34 +250,60 @@ const Footer = () => {
         </div> */}
 
         {/* 저작권 정보 */}
-        <div className="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
-          <div className="flex items-center mb-4 md:mb-0">
-            <span className="text-2xl font-bold gradient-text mr-2">
-              Fitculator
-            </span>
-            <span className="text-gray-400">
+        <div className="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center">
+          <div className="flex flex-col md:flex-row items-start md:items-center mb-8 md:mb-0">
+            <div className="mb-4 md:mb-0 mr-0 md:mr-2">
+              <Image
+                src="/fitculator_logo_wh.svg"
+                alt="Fitculator Logo"
+                width={160}
+                height={20}
+                className="object-contain max-w-[140px] sm:max-w-[160px]"
+              />
+            </div>
+            <span className="text-gray-400 text-xs md:text-sm">
               {getTextByLanguage(
                 translations.footer.copyright,
                 language
               ).replace('2025', new Date().getFullYear().toString())}
             </span>
           </div>
-          <div className="flex flex-wrap gap-4 justify-center">
-            {/* <Link href="#" className="text-gray-400 hover:text-white text-sm">
-              {getTextByLanguage(translations.footer.links.terms, language)}
-            </Link> */}
-            <Link
-              href="/privacy-policy"
-              className="text-gray-400 hover:text-white text-sm"
-            >
-              {getTextByLanguage(translations.footer.links.privacy, language)}
-            </Link>
-            {/* <Link href="#" className="text-gray-400 hover:text-white text-sm">
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center space-x-4">
+              <a
+                href="https://instagram.com/fitculator.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+                aria-label="Instagram"
+              >
+                <FaInstagram size={20} />
+              </a>
+              <a
+                href="mailto:support@fitculator.io"
+                className="text-gray-400 hover:text-white transition-colors"
+                aria-label="Email"
+              >
+                <FaRegEnvelope size={20} />
+              </a>
+            </div>
+            <div className="flex flex-wrap gap-4 mt-3 justify-start md:justify-center">
+              {/* <Link href="#" className="text-gray-400 hover:text-white text-sm">
+                {getTextByLanguage(translations.footer.links.terms, language)}
+              </Link> */}
+              <Link
+                href="/privacy-policy"
+                className="text-gray-400 hover:text-white text-sm"
+              >
+                {getTextByLanguage(translations.footer.links.privacy, language)}
+              </Link>
+              {/* <Link href="#" className="text-gray-400 hover:text-white text-sm">
               {language === 'ko' ? '쿠키' : 'Cookies'}
             </Link>
             <Link href="#" className="text-gray-400 hover:text-white text-sm">
               {language === 'ko' ? '법적 고지' : 'Legal'}
             </Link> */}
+            </div>
           </div>
         </div>
       </div>
