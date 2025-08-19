@@ -70,6 +70,14 @@ export async function POST(req: Request) {
     });
 
     const tossData = await tossResponse.json();
+    
+    console.log('==========================================');
+    console.log('토스페이먼츠 응답 데이터:');
+    console.log('status:', tossData.status);
+    console.log('orderId:', tossData.orderId);
+    console.log('amount:', tossData.totalAmount);
+    console.log('method:', tossData.method);
+    console.log('==========================================');
 
     if (!tossResponse.ok) {
       console.error('토스페이먼츠 API 오류:', tossData);
@@ -83,46 +91,18 @@ export async function POST(req: Request) {
     }
 
     // 2. 결제 성공 시 DB에 저장
+    console.log('토스 결제 상태 확인: tossData.status =', tossData.status);
     if (tossData.status === 'DONE') {
+      console.log('결제 상태 DONE 확인 - DB 저장 프로세스 시작');
       try {
         console.log('DB 저장 시작 - 서비스 타입:', serviceType);
         
-        // 서비스 타입 조회
-        const { data: serviceTypeData, error: serviceTypeError } = await supabase
-          .from('service_types')
-          .select('id')
-          .eq('name', serviceType)
-          .single();
-
-        if (serviceTypeError || !serviceTypeData) {
-          console.error('서비스 타입 조회 실패:', {
-            error: serviceTypeError,
-            data: serviceTypeData,
-            serviceType
-          });
-          throw new Error(`서비스 타입을 찾을 수 없습니다. (${serviceType})`);
-        }
+        // 하드코딩된 ID 사용
+        const serviceTypeId = 'd0e6cb62-1e5b-4f3c-87b3-df9f2ecad34b';
+        const planId = 'cad53416-8f14-422c-a36a-dc2edc361ef0';
         
-        console.log('서비스 타입 조회 성공:', serviceTypeData);
-
-        // 구독 플랜 조회 (studio_program_standard)
-        const { data: planData, error: planError } = await supabase
-          .from('subscription_plans')
-          .select('id')
-          .eq('service_type_id', serviceTypeData.id)
-          .eq('code', 'studio_standard')
-          .single();
-
-        if (planError || !planData) {
-          console.error('구독 플랜 조회 실패:', {
-            error: planError,
-            data: planData,
-            serviceTypeId: serviceTypeData.id
-          });
-          throw new Error('구독 플랜을 찾을 수 없습니다. (studio_standard)');
-        }
-        
-        console.log('구독 플랜 조회 성공:', planData);
+        console.log('하드코딩된 service_type_id:', serviceTypeId);
+        console.log('하드코딩된 plan_id:', planId);
 
         // 스튜디오 정보 생성 또는 조회 (실제로는 이미 존재해야 함)
         // 여기서는 임시로 slug 생성
@@ -139,8 +119,8 @@ export async function POST(req: Request) {
 
         const subscriptionData = {
           user_id: userId,
-          plan_id: planData.id,
-          service_type_id: serviceTypeData.id,
+          plan_id: planId,
+          service_type_id: serviceTypeId,
           reference_id: studioSlug,
           reference_name: studioName || 'Studio',
           status: 'active',
@@ -156,7 +136,20 @@ export async function POST(req: Request) {
           }
         };
         
-        console.log('구독 데이터 저장 시도:', subscriptionData);
+        console.log('==========================================');
+        console.log('구독 데이터 저장 시도 (subscriptions 테이블)');
+        console.log('==========================================');
+        console.log('user_id:', subscriptionData.user_id);
+        console.log('plan_id:', subscriptionData.plan_id);
+        console.log('service_type_id:', subscriptionData.service_type_id);
+        console.log('reference_id:', subscriptionData.reference_id);
+        console.log('reference_name:', subscriptionData.reference_name);
+        console.log('status:', subscriptionData.status);
+        console.log('start_date:', subscriptionData.start_date);
+        console.log('end_date:', subscriptionData.end_date);
+        console.log('auto_renew:', subscriptionData.auto_renew);
+        console.log('metadata:', JSON.stringify(subscriptionData.metadata, null, 2));
+        console.log('==========================================');
 
         const { data: subscription, error: subError } = await supabase
           .from('subscriptions')
@@ -305,7 +298,16 @@ export async function POST(req: Request) {
         }
 
       } catch (dbError) {
-        console.error('DB 저장 중 오류:', dbError);
+        console.error('==========================================');
+        console.error('DB 저장 중 오류 발생!!!');
+        console.error('오류 내용:', dbError);
+        console.error('오류 타입:', typeof dbError);
+        if (dbError instanceof Error) {
+          console.error('오류 메시지:', dbError.message);
+          console.error('오류 스택:', dbError.stack);
+        }
+        console.error('==========================================');
+        
         // 결제는 성공했지만 DB 저장 실패 - 관리자에게 알림 필요
         return NextResponse.json(
           {
@@ -315,6 +317,8 @@ export async function POST(req: Request) {
           { status: 200 }
         );
       }
+    } else {
+      console.log('결제 상태가 DONE이 아님. status:', tossData.status);
     }
 
     // 성공 응답 반환
