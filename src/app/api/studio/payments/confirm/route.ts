@@ -85,6 +85,8 @@ export async function POST(req: Request) {
     // 2. 결제 성공 시 DB에 저장
     if (tossData.status === 'DONE') {
       try {
+        console.log('DB 저장 시작 - 서비스 타입:', serviceType);
+        
         // 서비스 타입 조회
         const { data: serviceTypeData, error: serviceTypeError } = await supabase
           .from('service_types')
@@ -93,9 +95,15 @@ export async function POST(req: Request) {
           .single();
 
         if (serviceTypeError || !serviceTypeData) {
-          console.error('서비스 타입 조회 실패:', serviceTypeError);
-          throw new Error('서비스 타입을 찾을 수 없습니다.');
+          console.error('서비스 타입 조회 실패:', {
+            error: serviceTypeError,
+            data: serviceTypeData,
+            serviceType
+          });
+          throw new Error(`서비스 타입을 찾을 수 없습니다. (${serviceType})`);
         }
+        
+        console.log('서비스 타입 조회 성공:', serviceTypeData);
 
         // 구독 플랜 조회 (studio_program_standard)
         const { data: planData, error: planError } = await supabase
@@ -106,9 +114,15 @@ export async function POST(req: Request) {
           .single();
 
         if (planError || !planData) {
-          console.error('구독 플랜 조회 실패:', planError);
-          throw new Error('구독 플랜을 찾을 수 없습니다.');
+          console.error('구독 플랜 조회 실패:', {
+            error: planError,
+            data: planData,
+            serviceTypeId: serviceTypeData.id
+          });
+          throw new Error('구독 플랜을 찾을 수 없습니다. (studio_standard)');
         }
+        
+        console.log('구독 플랜 조회 성공:', planData);
 
         // 스튜디오 정보 생성 또는 조회 (실제로는 이미 존재해야 함)
         // 여기서는 임시로 slug 생성
@@ -119,66 +133,94 @@ export async function POST(req: Request) {
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + 1); // 1개월 후
 
+        // user_id 하드코딩
+        const userId = '01063347-84ef-4d79-8e1d-6406ed744dfa';
+        console.log('User ID (하드코딩):', userId);
+
+        const subscriptionData = {
+          user_id: userId,
+          plan_id: planData.id,
+          service_type_id: serviceTypeData.id,
+          reference_id: studioSlug,
+          reference_name: studioName || 'Studio',
+          status: 'active',
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          auto_renew: true,
+          metadata: {
+            member_count: memberCount,
+            initial_order_id: orderId,
+            program_name: programName,
+            contact_email: email,
+            contact_phone: `${countryCode}${phone}`
+          }
+        };
+        
+        console.log('구독 데이터 저장 시도:', subscriptionData);
+
         const { data: subscription, error: subError } = await supabase
           .from('subscriptions')
-          .insert({
-            user_id: orderId.split('_')[1], // 임시 user_id (실제로는 인증된 사용자 ID 사용)
-            plan_id: planData.id,
-            service_type_id: serviceTypeData.id,
-            reference_id: studioSlug,
-            reference_name: studioName || 'Studio',
-            status: 'active',
-            start_date: startDate.toISOString(),
-            end_date: endDate.toISOString(),
-            auto_renew: true,
-            metadata: {
-              member_count: memberCount,
-              initial_order_id: orderId,
-              program_name: programName,
-              contact_email: email,
-              contact_phone: `${countryCode}${phone}`
-            }
-          })
+          .insert(subscriptionData)
           .select()
           .single();
 
         if (subError) {
-          console.error('구독 정보 저장 실패:', subError);
-          throw new Error('구독 정보 저장에 실패했습니다.');
+          console.error('구독 정보 저장 실패 상세:', {
+            error: subError,
+            message: subError.message,
+            details: subError.details,
+            hint: subError.hint,
+            code: subError.code
+          });
+          throw new Error(`구독 정보 저장에 실패했습니다: ${subError.message}`);
         }
+        
+        console.log('구독 정보 저장 성공:', subscription);
 
         // 결제 정보 저장
+        const paymentData = {
+          subscription_id: subscription.id,
+          user_id: userId,
+          payment_key: paymentKey,
+          order_id: orderId,
+          order_name: tossData.orderName,
+          amount: amount,
+          currency: tossData.currency || 'KRW',
+          payment_method: tossData.method,
+          status: tossData.status,
+          card_type: tossData.card?.cardType,
+          owner_type: tossData.card?.ownerType,
+          approve_no: tossData.card?.approveNo,
+          payment_date: tossData.approvedAt,
+          billing_cycle: 'monthly',
+          metadata: {
+            studio_name: studioName,
+            program_name: programName,
+            contact_email: email,
+            contact_phone: `${countryCode}${phone}`,
+            member_count: memberCount,
+            service_type: serviceType
+          }
+        };
+        
+        console.log('결제 데이터 저장 시도:', paymentData);
+        
         const { error: paymentError } = await supabase
           .from('payments')
-          .insert({
-            subscription_id: subscription.id,
-            user_id: orderId.split('_')[1], // 임시 user_id
-            payment_key: paymentKey,
-            order_id: orderId,
-            order_name: tossData.orderName,
-            amount: amount,
-            currency: tossData.currency || 'KRW',
-            payment_method: tossData.method,
-            status: tossData.status,
-            card_type: tossData.card?.cardType,
-            owner_type: tossData.card?.ownerType,
-            approve_no: tossData.card?.approveNo,
-            payment_date: tossData.approvedAt,
-            billing_cycle: 'monthly',
-            metadata: {
-              studio_name: studioName,
-              program_name: programName,
-              contact_email: email,
-              contact_phone: `${countryCode}${phone}`,
-              member_count: memberCount,
-              service_type: serviceType
-            }
-          });
+          .insert(paymentData);
 
         if (paymentError) {
-          console.error('결제 정보 저장 실패:', paymentError);
-          throw new Error('결제 정보 저장에 실패했습니다.');
+          console.error('결제 정보 저장 실패 상세:', {
+            error: paymentError,
+            message: paymentError.message,
+            details: paymentError.details,
+            hint: paymentError.hint,
+            code: paymentError.code
+          });
+          throw new Error(`결제 정보 저장에 실패했습니다: ${paymentError.message}`);
         }
+        
+        console.log('결제 정보 저장 성공');
 
         console.log('스튜디오 구독 및 결제 정보 저장 성공');
 
@@ -240,7 +282,7 @@ export async function POST(req: Request) {
               ]
             };
 
-            await fetch(SLACK_STUDIO_PAYMENT_WEBHOOK_URL, {
+            const slackResponse = await fetch(SLACK_STUDIO_PAYMENT_WEBHOOK_URL, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -248,11 +290,18 @@ export async function POST(req: Request) {
               body: JSON.stringify(slackMessage),
             });
 
-            console.log('슬랙 알림 전송 성공');
+            if (!slackResponse.ok) {
+              const slackErrorText = await slackResponse.text();
+              console.error('슬랙 API 응답 오류:', slackResponse.status, slackErrorText);
+            } else {
+              console.log('슬랙 알림 전송 성공');
+            }
           } catch (slackError) {
             console.error('슬랙 알림 전송 실패:', slackError);
             // 슬랙 알림 실패는 결제 프로세스에 영향을 주지 않음
           }
+        } else {
+          console.log('슬랙 웹훅 URL이 설정되지 않음');
         }
 
       } catch (dbError) {
