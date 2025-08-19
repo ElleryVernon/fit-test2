@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
 import { motion } from 'framer-motion';
-import { FiUsers, FiCreditCard, FiCheck, FiArrowRight, FiArrowLeft, FiHome } from 'react-icons/fi';
+import { FiCreditCard, FiCheck, FiArrowRight, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -114,7 +114,7 @@ export default function StudioPaymentPage() {
     }
   };
   
-  const t = translations[language];
+  const t = translations[language as keyof typeof translations];
   
   const countryCodes = [
     { code: '+82', country: '🇰🇷 대한민국', flag: '🇰🇷' },
@@ -355,7 +355,7 @@ export default function StudioPaymentPage() {
 
               <button
                 onClick={() => setStep(2)}
-                disabled={!studioInfo.name || !studioInfo.email || !studioInfo.phone || !studioInfo.programName || emailError}
+                disabled={!studioInfo.name || !studioInfo.email || !studioInfo.phone || !studioInfo.programName || !!emailError}
                 className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-600 hover:to-cyan-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {t.form.nextStep}

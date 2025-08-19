@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FiCheckCircle, FiHome, FiArrowRight } from 'react-icons/fi';
 import Link from 'next/link';
 
-export default function StudioPaymentSuccessPage() {
+function SuccessPageContent() {
   const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(true);
-  const [paymentData, setPaymentData] = useState<any>(null);
+  const [, setPaymentData] = useState<{ status: string; amount: number; orderId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -57,6 +57,7 @@ export default function StudioPaymentSuccessPage() {
 
         const data = await response.json();
         setPaymentData(data);
+        console.log('Payment confirmed:', data);
       } catch (err) {
         console.error('결제 승인 오류:', err);
         setError(err instanceof Error ? err.message : '결제 처리 중 오류가 발생했습니다.');
@@ -183,5 +184,13 @@ export default function StudioPaymentSuccessPage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function StudioPaymentSuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SuccessPageContent />
+    </Suspense>
   );
 }

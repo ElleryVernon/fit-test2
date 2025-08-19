@@ -4,8 +4,9 @@ import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FiXCircle, FiArrowLeft, FiHelpCircle } from 'react-icons/fi';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-export default function StudioPaymentFailPage() {
+function FailPageContent() {
   const searchParams = useSearchParams();
   const errorCode = searchParams.get('code');
   const errorMessage = searchParams.get('message');
@@ -110,5 +111,13 @@ export default function StudioPaymentFailPage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function StudioPaymentFailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <FailPageContent />
+    </Suspense>
   );
 }
