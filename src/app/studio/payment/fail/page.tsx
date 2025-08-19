@@ -86,8 +86,8 @@ function FailPageContent() {
           <div className="bg-gray-50 rounded-lg p-6 mb-8">
             <p className="text-sm text-gray-600 text-center">
               계속 문제가 발생한다면 고객센터로 문의해주세요<br />
-              <a href="mailto:support@fitculator.com" className="text-blue-600 hover:underline">
-                support@fitculator.com
+              <a href="mailto:support@fitculator.io" className="text-blue-600 hover:underline">
+                support@fitculator.io
               </a>
             </p>
           </div>
@@ -95,11 +95,11 @@ function FailPageContent() {
           {/* Action Buttons */}
           <div className="flex space-x-4">
             <Link
-              href="/"
+              href="/studio/payment"
               className="flex-1 bg-gray-200 text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-300 transition-colors flex items-center justify-center"
             >
               <FiArrowLeft className="mr-2" />
-              홈으로 돌아가기
+              처음으로
             </Link>
             <Link
               href="/studio/payment"

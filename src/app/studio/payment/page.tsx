@@ -131,16 +131,38 @@ export default function StudioPaymentPage() {
   const pricePerMember = 10000;
   const totalAmount = studioInfo.memberCount * pricePerMember;
 
+  // Toss Payments용 전화번호 포맷팅 (한국 번호는 01012345678 형식)
+  const formatPhoneForToss = (countryCode: string, phone: string) => {
+    if (countryCode === '+82') {
+      // 한국 번호: 10자리를 01012345678 형식으로 변환
+      return '0' + phone;
+    }
+    // 다른 국가: 국가코드 + 전화번호
+    return countryCode.replace('+', '') + phone;
+  };
+
+  // DB 저장용 전화번호 포맷팅 (국제 표준 형식)
+  const formatPhoneForDB = (countryCode: string, phone: string) => {
+    return countryCode + phone;
+  };
+
   // 이메일 포맷 검증
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // 연락처 숫자만 입력 허용
+  // 연락처 숫자만 입력 허용 (+82인 경우 0 제거)
   const handlePhoneChange = (value: string) => {
     const numbersOnly = value.replace(/[^0-9]/g, '');
-    setStudioInfo({ ...studioInfo, phone: numbersOnly });
+    
+    // +82인 경우 0으로 시작하면 제거
+    let formattedPhone = numbersOnly;
+    if (studioInfo.countryCode === '+82' && numbersOnly.startsWith('0')) {
+      formattedPhone = numbersOnly.substring(1);
+    }
+    
+    setStudioInfo({ ...studioInfo, phone: formattedPhone });
   };
 
   // 이메일 변경 핸들러
@@ -169,11 +191,11 @@ export default function StudioPaymentPage() {
         amount: totalAmount,
         orderId,
         orderName,
-        successUrl: `${window.location.origin}/studio/payment/success?studioName=${encodeURIComponent(studioInfo.name)}&programName=${encodeURIComponent(studioInfo.programName)}&email=${encodeURIComponent(studioInfo.email)}&phone=${encodeURIComponent(studioInfo.phone)}&countryCode=${encodeURIComponent(studioInfo.countryCode)}&memberCount=${studioInfo.memberCount}`,
+        successUrl: `${window.location.origin}/studio/payment/success?studioName=${encodeURIComponent(studioInfo.name)}&programName=${encodeURIComponent(studioInfo.programName)}&email=${encodeURIComponent(studioInfo.email)}&phone=${encodeURIComponent(formatPhoneForDB(studioInfo.countryCode, studioInfo.phone))}&memberCount=${studioInfo.memberCount}`,
         failUrl: `${window.location.origin}/studio/payment/fail`,
         customerEmail: studioInfo.email,
         customerName: studioInfo.name,
-        customerMobilePhone: `${studioInfo.countryCode}${studioInfo.phone.replace(/-/g, '')}`,
+        customerMobilePhone: formatPhoneForToss(studioInfo.countryCode, studioInfo.phone),
       });
     } catch (error) {
       console.error('결제 요청 오류:', error);
@@ -333,7 +355,21 @@ export default function StudioPaymentPage() {
                 <div className="flex space-x-2">
                   <select
                     value={studioInfo.countryCode}
-                    onChange={(e) => setStudioInfo({ ...studioInfo, countryCode: e.target.value })}
+                    onChange={(e) => {
+                      const newCountryCode = e.target.value;
+                      let newPhone = studioInfo.phone;
+                      
+                      // 기존 +82에서 다른 국가로 변경시 앞에 0 추가
+                      if (studioInfo.countryCode === '+82' && newCountryCode !== '+82') {
+                        newPhone = '0' + studioInfo.phone;
+                      }
+                      // 다른 국가에서 +82로 변경시 맨 앞 0 제거
+                      else if (studioInfo.countryCode !== '+82' && newCountryCode === '+82') {
+                        newPhone = studioInfo.phone.startsWith('0') ? studioInfo.phone.substring(1) : studioInfo.phone;
+                      }
+                      
+                      setStudioInfo({ ...studioInfo, countryCode: newCountryCode, phone: newPhone });
+                    }}
                     className="w-20 md:w-auto px-2 md:px-3 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-sm"
                   >
                     {countryCodes.map((country) => (
@@ -477,7 +513,7 @@ export default function StudioPaymentPage() {
               </div>
               <div className="flex justify-between py-3 border-b border-gray-700">
                 <span className="text-gray-400">{t.form.phone}</span>
-                <span className="font-medium">{studioInfo.countryCode} {studioInfo.phone}</span>
+                <span className="font-medium">{formatPhoneForDB(studioInfo.countryCode, studioInfo.phone)}</span>
               </div>
               <div className="flex justify-between py-3 border-b border-gray-700">
                 <span className="text-gray-400">{t.form.memberCountLabel}</span>
