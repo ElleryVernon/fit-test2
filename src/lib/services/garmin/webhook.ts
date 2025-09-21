@@ -29,6 +29,7 @@ export async function saveWebhookLog(
 // 활동 데이터 저장/업데이트
 export async function saveActivity(
   garminUserId: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   activityData: any,
   isManual: boolean = false,
   isAutoDetected: boolean = false
@@ -196,6 +197,7 @@ export async function processWebhook(webhookId: string) {
 }
 
 // Webhook 검증 (Garmin은 서명 검증을 제공하지 않으므로 기본 검증만 수행)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function verifyWebhookPayload(payload: any): boolean {
   // 기본적인 payload 구조 검증
   if (!payload || typeof payload !== 'object') {

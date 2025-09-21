@@ -12,7 +12,8 @@ export async function GET() {
       .gte('created_at', yesterday)
 
     // 상태별 집계
-    const summary = stats?.reduce((acc, log) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const summary = stats?.reduce((acc: any, log: any) => {
       acc[log.status] = (acc[log.status] || 0) + 1
       acc.types[log.type] = (acc.types[log.type] || 0) + 1
       return acc
@@ -30,7 +31,7 @@ export async function GET() {
       last_24h: summary,
       recent_logs: recent
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch status' },
       { status: 500 }

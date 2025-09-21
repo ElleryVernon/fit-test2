@@ -6,7 +6,6 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const userId = searchParams.get('user_id')
     const period = searchParams.get('period') || '7' // 기본 7일
-    const groupBy = searchParams.get('group_by') || 'day' // day, week, month
 
     if (!userId) {
       return NextResponse.json(
@@ -32,10 +31,11 @@ export async function GET(request: NextRequest) {
     }
 
     // 통계 계산
-    const stats = calculateStatistics(activities || [], groupBy)
+    const stats = calculateStatistics(activities || [])
 
     // 활동 타입별 통계
-    const activityTypeStats = activities?.reduce((acc: any, activity) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const activityTypeStats = activities?.reduce((acc: Record<string, any>, activity: any) => {
       const type = activity.activity_type
       if (!acc[type]) {
         acc[type] = {
@@ -109,7 +109,8 @@ export async function GET(request: NextRequest) {
 }
 
 // 통계 계산 함수
-function calculateStatistics(activities: any[], groupBy: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function calculateStatistics(activities: any[]) {
   const summary = {
     total_activities: activities.length,
     total_duration_hours: 0,
@@ -119,6 +120,7 @@ function calculateStatistics(activities: any[], groupBy: string) {
     total_steps: 0
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dailyStats: Record<string, any> = {}
 
   activities.forEach(activity => {
@@ -162,6 +164,7 @@ function calculateStatistics(activities: any[], groupBy: string) {
   summary.total_distance_km = parseFloat(summary.total_distance_km.toFixed(2))
 
   // 일별 통계 소수점 정리
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Object.values(dailyStats).forEach((stat: any) => {
     stat.duration_minutes = Math.round(stat.duration_minutes)
     stat.distance_km = parseFloat(stat.distance_km.toFixed(2))
@@ -169,6 +172,7 @@ function calculateStatistics(activities: any[], groupBy: string) {
 
   return {
     summary,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     daily: Object.values(dailyStats).sort((a: any, b: any) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     )
@@ -176,6 +180,7 @@ function calculateStatistics(activities: any[], groupBy: string) {
 }
 
 // 트렌드 분석
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function calculateTrends(activities: any[]) {
   if (activities.length < 2) {
     return {
@@ -218,7 +223,7 @@ function calculateTrends(activities: any[]) {
 }
 
 // OPTIONS 요청 처리 (CORS)
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

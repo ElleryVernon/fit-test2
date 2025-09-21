@@ -211,8 +211,7 @@ export async function saveGarminConnection(
   userId: string,
   accessToken: string,
   refreshToken: string,
-  expiresIn: number,
-  refreshTokenExpiresIn: number
+  expiresIn: number
 ) {
   // Garmin User ID 조회
   const garminUserId = await fetchGarminUserId(accessToken)
@@ -222,7 +221,6 @@ export async function saveGarminConnection(
 
   // 토큰 만료 시간 계산 (600초 여유를 두고 저장)
   const tokenExpiresAt = new Date(Date.now() + (expiresIn - 600) * 1000)
-  const refreshTokenExpiresAt = new Date(Date.now() + (refreshTokenExpiresIn - 600) * 1000)
 
   const { data, error } = await supabaseAdmin
     .from('garmin_connections')

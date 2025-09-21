@@ -5,7 +5,6 @@ export async function GET(request: NextRequest) {
   try {
     // 1. 모바일 앱에서 전달받은 user_id
     const userId = request.nextUrl.searchParams.get('user_id')
-    const returnUrl = request.nextUrl.searchParams.get('return_url') // 선택적: 커스텀 리턴 URL
 
     if (!userId) {
       return NextResponse.json(
@@ -35,7 +34,7 @@ export async function GET(request: NextRequest) {
 }
 
 // OPTIONS 요청 처리 (CORS)
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

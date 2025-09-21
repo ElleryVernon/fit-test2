@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       retried: results.length,
       success: results.filter(r => r.status === 'fulfilled').length
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Retry failed' },
       { status: 500 }

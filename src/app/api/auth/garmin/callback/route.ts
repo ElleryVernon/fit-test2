@@ -49,8 +49,7 @@ export async function GET(request: NextRequest) {
       userId,
       tokens.access_token,
       tokens.refresh_token,
-      tokens.expires_in,
-      tokens.refresh_token_expires_in
+      tokens.expires_in
     )
 
     console.log('Garmin OAuth 2.0 connection saved for user:', userId)
@@ -70,7 +69,7 @@ export async function GET(request: NextRequest) {
 }
 
 // OPTIONS 요청 처리 (CORS)
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

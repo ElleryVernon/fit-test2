@@ -32,6 +32,7 @@ export interface GarminActivity {
   is_manual: boolean
   is_auto_detected: boolean
   file_url: string | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw_data: any
   created_at: string
   updated_at: string
@@ -44,6 +45,7 @@ export interface WebhookLog {
   summary_id: string | null
   file_type: string | null
   callback_url: string | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any
   status: 'pending' | 'processing' | 'success' | 'failed'
   error_message: string | null
