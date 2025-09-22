@@ -199,19 +199,30 @@ export async function processWebhook(webhookId: string) {
 // Webhook 검증 (Garmin은 서명 검증을 제공하지 않으므로 기본 검증만 수행)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function verifyWebhookPayload(payload: any): boolean {
+  console.log('🔍 [Webhook Validation] Checking payload structure...')
+
   // 기본적인 payload 구조 검증
   if (!payload || typeof payload !== 'object') {
+    console.error('❌ [Webhook Validation] Payload is not an object')
     return false
   }
 
-  // 필수 필드 확인
-  if (!payload.userId) {
-    console.error('Webhook payload missing userId')
+  // Garmin 웹훅의 일반적인 구조 확인
+  // 최소한 하나의 필드라도 있으면 유효한 것으로 간주 (매우 관대한 검증)
+  const hasAnyGarminField =
+    payload.userId ||           // 일부 웹훅
+    payload.userAccessToken ||  // 액세스 토큰 기반 웹훅
+    payload.summaryId ||        // 활동 요약 ID
+    payload.fileType ||         // 파일 유형
+    payload.callbackURL ||      // 콜백 URL
+    payload.activities ||       // 활동 목록
+    Array.isArray(payload)      // 배열 형태의 웹훅
+
+  if (!hasAnyGarminField) {
+    console.error('❌ [Webhook Validation] No recognizable Garmin webhook fields found', Object.keys(payload))
     return false
   }
 
-  // 추가 검증 로직을 여기에 추가할 수 있습니다
-  // 예: IP 화이트리스트, 타임스탬프 검증 등
-
+  console.log('✅ [Webhook Validation] Payload structure is valid')
   return true
 }
