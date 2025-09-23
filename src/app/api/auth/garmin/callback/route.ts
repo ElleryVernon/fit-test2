@@ -6,6 +6,9 @@ import {
 } from '@/lib/services/garmin/oauth'
 
 export async function GET(request: NextRequest) {
+  console.log('🔗 [Garmin OAuth] Callback received')
+  console.log('📋 [Garmin OAuth] URL:', request.url)
+
   try {
     // 1. Garmin OAuth 2.0에서 전달받은 파라미터
     const searchParams = request.nextUrl.searchParams
@@ -13,10 +16,12 @@ export async function GET(request: NextRequest) {
     const state = searchParams.get('state')
     const error = searchParams.get('error')
 
+    console.log('📝 [Garmin OAuth] Parameters:', { code: code ? 'present' : 'missing', state, error })
+
     // 에러가 있거나 사용자가 거부한 경우
     if (error || !code) {
       const errorMessage = error || 'User denied access or authorization code missing'
-      console.error('OAuth error:', errorMessage)
+      console.error('❌ [Garmin OAuth] Error:', errorMessage)
 
       // 웹 브라우저용 리다이렉트
       const webRedirectUrl = `/garmin-test?error=${encodeURIComponent(errorMessage)}`
@@ -25,28 +30,34 @@ export async function GET(request: NextRequest) {
 
     // 2. State 검증 (CSRF 방지) 및 code verifier 조회
     if (!state) {
-      console.error('No state parameter received')
+      console.error('❌ [Garmin OAuth] No state parameter received')
       // 웹 브라우저용 리다이렉트
       const webRedirectUrl = `/garmin-test?error=${encodeURIComponent('Invalid state')}`
       return NextResponse.redirect(new URL(webRedirectUrl, request.url))
     }
 
+    console.log('🔍 [Garmin OAuth] Verifying state:', state)
     const stateData = await verifyOAuthState(state)
     if (!stateData) {
-      console.error('Invalid or expired state:', state)
+      console.error('❌ [Garmin OAuth] Invalid or expired state:', state)
       // 웹 브라우저용 리다이렉트
       const webRedirectUrl = `/garmin-test?error=${encodeURIComponent('Invalid or expired state')}`
       return NextResponse.redirect(new URL(webRedirectUrl, request.url))
     }
 
     const { userId, codeVerifier } = stateData
+    console.log('✅ [Garmin OAuth] State verified for user:', userId)
 
     // 3. OAuth 2.0 토큰 교환
-    console.log('Exchanging OAuth 2.0 tokens for user:', userId)
+    console.log('🔄 [Garmin OAuth] Exchanging tokens for user:', userId)
     const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/garmin/callback`
+    console.log('🔗 [Garmin OAuth] Redirect URI:', redirectUri)
+
     const tokens = await exchangeCodeForTokens(code, codeVerifier, redirectUri)
+    console.log('✅ [Garmin OAuth] Tokens received')
 
     // 4. 연결 정보 저장
+    console.log('💾 [Garmin OAuth] Saving connection for user:', userId)
     await saveGarminConnection(
       userId,
       tokens.access_token,
@@ -54,17 +65,19 @@ export async function GET(request: NextRequest) {
       tokens.expires_in
     )
 
-    console.log('Garmin OAuth 2.0 connection saved for user:', userId)
+    console.log('✅ [Garmin OAuth] Connection saved for user:', userId)
 
     // 5. 성공 - 웹 브라우저용 리다이렉트
     const webRedirectUrl = `/garmin-test?success=true&user_id=${userId}`
     return NextResponse.redirect(new URL(webRedirectUrl, request.url))
 
   } catch (error) {
-    console.error('OAuth 2.0 callback error:', error)
+    console.error('❌ [Garmin OAuth] Callback error:', error)
+    console.error('❌ [Garmin OAuth] Error stack:', error instanceof Error ? error.stack : 'No stack trace')
 
     // 에러 발생 시 웹 브라우저용 리다이렉트
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('❌ [Garmin OAuth] Redirecting with error:', errorMessage)
     const webRedirectUrl = `/garmin-test?error=${encodeURIComponent(errorMessage)}`
     return NextResponse.redirect(new URL(webRedirectUrl, request.url))
   }
