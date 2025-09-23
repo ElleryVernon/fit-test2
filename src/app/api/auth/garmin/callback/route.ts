@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   verifyOAuthState,
   exchangeCodeForTokens,
-  saveGarminConnection,
-  buildMobileRedirectUrl
+  saveGarminConnection
 } from '@/lib/services/garmin/oauth'
 
 export async function GET(request: NextRequest) {
@@ -19,22 +18,25 @@ export async function GET(request: NextRequest) {
       const errorMessage = error || 'User denied access or authorization code missing'
       console.error('OAuth error:', errorMessage)
 
-      const redirectUrl = buildMobileRedirectUrl(false, undefined, errorMessage)
-      return NextResponse.redirect(redirectUrl)
+      // 웹 브라우저용 리다이렉트
+      const webRedirectUrl = `/garmin-test?error=${encodeURIComponent(errorMessage)}`
+      return NextResponse.redirect(new URL(webRedirectUrl, request.url))
     }
 
     // 2. State 검증 (CSRF 방지) 및 code verifier 조회
     if (!state) {
       console.error('No state parameter received')
-      const redirectUrl = buildMobileRedirectUrl(false, undefined, 'Invalid state')
-      return NextResponse.redirect(redirectUrl)
+      // 웹 브라우저용 리다이렉트
+      const webRedirectUrl = `/garmin-test?error=${encodeURIComponent('Invalid state')}`
+      return NextResponse.redirect(new URL(webRedirectUrl, request.url))
     }
 
     const stateData = await verifyOAuthState(state)
     if (!stateData) {
       console.error('Invalid or expired state:', state)
-      const redirectUrl = buildMobileRedirectUrl(false, undefined, 'Invalid or expired state')
-      return NextResponse.redirect(redirectUrl)
+      // 웹 브라우저용 리다이렉트
+      const webRedirectUrl = `/garmin-test?error=${encodeURIComponent('Invalid or expired state')}`
+      return NextResponse.redirect(new URL(webRedirectUrl, request.url))
     }
 
     const { userId, codeVerifier } = stateData
@@ -54,17 +56,17 @@ export async function GET(request: NextRequest) {
 
     console.log('Garmin OAuth 2.0 connection saved for user:', userId)
 
-    // 5. 성공 - 모바일 앱으로 리다이렉트
-    const redirectUrl = buildMobileRedirectUrl(true, userId)
-    return NextResponse.redirect(redirectUrl)
+    // 5. 성공 - 웹 브라우저용 리다이렉트
+    const webRedirectUrl = `/garmin-test?success=true&user_id=${userId}`
+    return NextResponse.redirect(new URL(webRedirectUrl, request.url))
 
   } catch (error) {
     console.error('OAuth 2.0 callback error:', error)
 
-    // 에러 발생 시 모바일 앱으로 에러 전달
+    // 에러 발생 시 웹 브라우저용 리다이렉트
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    const redirectUrl = buildMobileRedirectUrl(false, undefined, errorMessage)
-    return NextResponse.redirect(redirectUrl)
+    const webRedirectUrl = `/garmin-test?error=${encodeURIComponent(errorMessage)}`
+    return NextResponse.redirect(new URL(webRedirectUrl, request.url))
   }
 }
 

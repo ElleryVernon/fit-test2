@@ -1,13 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
-
-// Supabase 클라이언트 초기화
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { useAuth } from '@/contexts/AuthContext'
 
 // 구글 로그인 SVG 아이콘
 const GoogleIcon = () => (
@@ -54,43 +48,40 @@ interface ApiResponse {
 }
 
 export default function GarminTestPage() {
-  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
+  const { user, signInWithGoogle, signInWithApple, signOut, loading: authLoading, error: authError } = useAuth()
   const [loading, setLoading] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus | null>(null)
   const [apiResponses, setApiResponses] = useState<Record<string, ApiResponse>>({})
   const [activeTab, setActiveTab] = useState<'auth' | 'garmin' | 'apis'>('auth')
 
   useEffect(() => {
-    // 현재 세션 확인
-    checkUser()
+    // URL 파라미터 체크 (Garmin OAuth 결과 처리)
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const success = urlParams.get('success')
+      const error = urlParams.get('error')
 
-    // Auth 상태 변경 리스너
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        setUser(session.user)
-        setActiveTab('garmin')
-        checkGarminConnection(session.user.id)
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null)
-        setConnectionStatus(null)
-        setApiResponses({})
-        setActiveTab('auth')
+      if (success === 'true') {
+        alert('Garmin 연동이 성공적으로 완료되었습니다!')
+        // URL 정리
+        window.history.replaceState({}, '', '/garmin-test')
+      } else if (error) {
+        alert(`Garmin 연동 중 오류가 발생했습니다: ${decodeURIComponent(error)}`)
+        // URL 정리
+        window.history.replaceState({}, '', '/garmin-test')
       }
-    })
-
-    return () => {
-      authListener?.subscription.unsubscribe()
     }
-  }, [])
 
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setUser(user)
     if (user) {
       setActiveTab('garmin')
       checkGarminConnection(user.id)
+    } else {
+      setConnectionStatus(null)
+      setApiResponses({})
+      setActiveTab('auth')
     }
-  }
+  }, [user])
+
 
   const checkGarminConnection = async (userId: string) => {
     try {
@@ -108,13 +99,10 @@ export default function GarminTestPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/garmin-test`,
-        },
-      })
-      if (error) throw error
+      const success = await signInWithGoogle()
+      if (!success) {
+        alert('Google 로그인에 실패했습니다.')
+      }
     } catch (error) {
       console.error('Google sign in error:', error)
       alert(error instanceof Error ? error.message : 'Google sign in failed')
@@ -126,13 +114,10 @@ export default function GarminTestPage() {
   const handleAppleSignIn = async () => {
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'apple',
-        options: {
-          redirectTo: `${window.location.origin}/garmin-test`,
-        },
-      })
-      if (error) throw error
+      const success = await signInWithApple()
+      if (!success) {
+        alert('Apple 로그인에 실패했습니다.')
+      }
     } catch (error) {
       console.error('Apple sign in error:', error)
       alert(error instanceof Error ? error.message : 'Apple sign in failed')
@@ -142,11 +127,14 @@ export default function GarminTestPage() {
   }
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    setConnectionStatus(null)
-    setApiResponses({})
-    setActiveTab('auth')
+    try {
+      await signOut()
+      setConnectionStatus(null)
+      setApiResponses({})
+      setActiveTab('auth')
+    } catch (error) {
+      console.error('Sign out error:', error)
+    }
   }
 
   const connectGarmin = () => {
@@ -307,21 +295,31 @@ export default function GarminTestPage() {
 
               <button
                 onClick={handleGoogleSignIn}
-                disabled={loading}
+                disabled={loading || authLoading}
                 className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 <GoogleIcon />
-                <span className="font-medium">Google로 계속하기</span>
+                <span className="font-medium">
+                  {loading || authLoading ? '처리 중...' : 'Google로 계속하기'}
+                </span>
               </button>
 
               <button
                 onClick={handleAppleSignIn}
-                disabled={loading}
+                disabled={loading || authLoading}
                 className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-900 disabled:opacity-50 transition-colors"
               >
                 <AppleIcon />
-                <span className="font-medium">Apple로 계속하기</span>
+                <span className="font-medium">
+                  {loading || authLoading ? '처리 중...' : 'Apple로 계속하기'}
+                </span>
               </button>
+
+              {authError && (
+                <div className="mt-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
+                  {authError}
+                </div>
+              )}
 
               <div className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
                 로그인하면 서비스 이용약관 및 개인정보 처리방침에 동의합니다

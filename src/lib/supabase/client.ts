@@ -1,9 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
 
-// 클라이언트용 (이미 있을 것)
+// 클라이언트용 (Auth 비활성화)
 export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    }
+  }
 )
 
 // 서버용 (Service Role Key 사용)
