@@ -76,7 +76,19 @@ export async function GET(request: NextRequest) {
     console.error('❌ [Garmin OAuth] Error stack:', error instanceof Error ? error.stack : 'No stack trace')
 
     // 에러 발생 시 웹 브라우저용 리다이렉트
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    let errorMessage = 'Unknown error'
+    if (error instanceof Error) {
+      errorMessage = `${error.name}: ${error.message}`
+      // 추가 컨텍스트 정보
+      if (error.message.includes('Failed to fetch')) {
+        errorMessage += ' (Network issue - check Garmin API connection)'
+      } else if (error.message.includes('Token exchange failed')) {
+        errorMessage += ' (Check Garmin client credentials)'
+      } else if (error.message.includes('Invalid state')) {
+        errorMessage += ' (OAuth state expired or invalid)'
+      }
+    }
+
     console.error('❌ [Garmin OAuth] Redirecting with error:', errorMessage)
     const webRedirectUrl = `/garmin-test?error=${encodeURIComponent(errorMessage)}`
     return NextResponse.redirect(new URL(webRedirectUrl, request.url))
