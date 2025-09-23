@@ -93,24 +93,45 @@ export async function verifyOAuthState(state: string): Promise<{ userId: string;
 
 // Garmin OAuth 2.0 PKCE URL 생성
 export function buildGarminAuthUrl(state: string, codeChallenge: string): string {
+  // Environment variable validation
+  if (!process.env.GARMIN_CLIENT_ID || !process.env.NEXT_PUBLIC_BASE_URL) {
+    console.error('❌ [Garmin OAuth] Missing environment variables for auth URL:', {
+      hasClientId: !!process.env.GARMIN_CLIENT_ID,
+      hasBaseUrl: !!process.env.NEXT_PUBLIC_BASE_URL
+    })
+    throw new Error('Missing Garmin OAuth configuration in environment variables')
+  }
+
   const baseUrl = 'https://connect.garmin.com/oauth2Confirm'
+  const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/garmin/callback`
+
   const params = new URLSearchParams({
     response_type: 'code',
-    client_id: process.env.GARMIN_CLIENT_ID!,
-    redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/garmin/callback`,
+    client_id: process.env.GARMIN_CLIENT_ID,
+    redirect_uri: redirectUri,
     state: state,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256'
   })
 
-  return `${baseUrl}?${params.toString()}`
+  const authUrl = `${baseUrl}?${params.toString()}`
+
+  console.log('🔗 [Garmin OAuth] Generated auth URL:', {
+    baseUrl,
+    clientId: process.env.GARMIN_CLIENT_ID,
+    redirectUri,
+    state,
+    codeChallenge
+  })
+
+  return authUrl
 }
 
 // OAuth 2.0 토큰 교환
 export async function exchangeCodeForTokens(
   code: string,
   codeVerifier: string,
-  redirectUri?: string
+  redirectUri: string
 ): Promise<{
   access_token: string
   refresh_token: string
@@ -118,17 +139,29 @@ export async function exchangeCodeForTokens(
   refresh_token_expires_in: number
   scope: string
 }> {
+  // Environment variable validation
+  if (!process.env.GARMIN_CLIENT_ID || !process.env.GARMIN_CLIENT_SECRET) {
+    console.error('❌ [Garmin OAuth] Missing environment variables:', {
+      hasClientId: !!process.env.GARMIN_CLIENT_ID,
+      hasClientSecret: !!process.env.GARMIN_CLIENT_SECRET
+    })
+    throw new Error('Missing Garmin OAuth credentials in environment variables')
+  }
+
   const params = new URLSearchParams({
     grant_type: 'authorization_code',
-    client_id: process.env.GARMIN_CLIENT_ID!,
-    client_secret: process.env.GARMIN_CLIENT_SECRET!,
+    client_id: process.env.GARMIN_CLIENT_ID,
+    client_secret: process.env.GARMIN_CLIENT_SECRET,
     code: code,
-    code_verifier: codeVerifier
+    code_verifier: codeVerifier,
+    redirect_uri: redirectUri
   })
 
-  if (redirectUri) {
-    params.append('redirect_uri', redirectUri)
-  }
+  console.log('🔄 [Garmin OAuth] Token exchange request:', {
+    url: 'https://diauth.garmin.com/di-oauth2-service/oauth/token',
+    params: Object.fromEntries(params),
+    redirectUri
+  })
 
   const response = await fetch('https://diauth.garmin.com/di-oauth2-service/oauth/token', {
     method: 'POST',
@@ -138,12 +171,22 @@ export async function exchangeCodeForTokens(
     body: params.toString()
   })
 
+  console.log('📋 [Garmin OAuth] Token exchange response status:', response.status)
+
   if (!response.ok) {
     const error = await response.text()
+    console.error('❌ [Garmin OAuth] Token exchange error response:', error)
     throw new Error(`Token exchange failed: ${response.status} - ${error}`)
   }
 
-  return response.json()
+  const tokenData = await response.json()
+  console.log('✅ [Garmin OAuth] Token exchange success:', {
+    hasAccessToken: !!tokenData.access_token,
+    hasRefreshToken: !!tokenData.refresh_token,
+    expiresIn: tokenData.expires_in
+  })
+
+  return tokenData
 }
 
 // Refresh Token으로 Access Token 갱신
