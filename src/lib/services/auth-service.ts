@@ -11,6 +11,22 @@ const NEXT_PUBLIC_GOOGLE_CLIENT_ID = process.env
 const NEXT_PUBLIC_APPLE_CLIENT_ID = process.env
   .NEXT_PUBLIC_APPLE_CLIENT_ID as string;
 
+// Apple Sign In Response 타입 정의
+interface AppleSignInResponse {
+  authorization: {
+    code: string;
+    id_token: string;
+    state: string;
+  };
+  user?: {
+    email: string;
+    name: {
+      firstName: string;
+      lastName: string;
+    };
+  };
+}
+
 // 상수 정의
 const KEY_USER_DATA = 'user_data';
 const KEY_ACCESS_TOKEN = 'access_token';
@@ -241,7 +257,7 @@ export class AuthService {
 
         // Apple Sign In 실행
         window.AppleID.auth.signIn().then(
-          async (response: any) => {
+          async (response: AppleSignInResponse) => {
             try {
               // 임시로 성공 처리 (실제 구현 시 백엔드 연동 필요)
               console.log('Apple 로그인 응답:', response);
@@ -351,7 +367,7 @@ declare global {
           state: string;
           usePopup: boolean;
         }) => void;
-        signIn: () => Promise<any>;
+        signIn: () => Promise<AppleSignInResponse>;
       };
     };
   }
