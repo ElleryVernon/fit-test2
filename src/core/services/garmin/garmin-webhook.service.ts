@@ -54,14 +54,25 @@ export class GarminWebhookService {
     isManual: boolean = false,
     isAutoDetected: boolean = false
   ) {
+    console.log(
+      `[saveActivity] Looking for connection with garminUserId: ${garminUserId}`
+    );
+
     const connection = await prisma.garminConnection.findFirst({
       where: { garminUserId },
       select: { userId: true },
     });
 
     if (!connection) {
+      console.error(
+        `[saveActivity] ❌ Connection not found for garminUserId: ${garminUserId}`
+      );
       throw new Error(`Garmin connection not found for user: ${garminUserId}`);
     }
+
+    console.log(
+      `[saveActivity] ✅ Found connection, userId: ${connection.userId}`
+    );
 
     const activityRecord = {
       userId: connection.userId,
@@ -98,11 +109,19 @@ export class GarminWebhookService {
       rawData: activityData as never,
     };
 
+    console.log(
+      `[saveActivity] Upserting activity: ${activityRecord.garminActivityId}`
+    );
+
     const data = await prisma.garminActivity.upsert({
       where: { garminActivityId: activityRecord.garminActivityId },
       update: activityRecord,
       create: activityRecord,
     });
+
+    console.log(
+      `[saveActivity] ✅ Activity upserted successfully: ${data.id}`
+    );
 
     return data;
   }
@@ -143,14 +162,29 @@ export class GarminWebhookService {
             );
 
             for (const activityDetail of payload.activityDetails) {
+              console.log(
+                `[Webhook] Processing activity ${activityDetail.activityId} for user ${activityDetail.userId}`
+              );
+
               const summary = activityDetail.summary;
               if (summary) {
-                await this.saveActivity(
-                  activityDetail.userId,
-                  summary,
-                  false,
-                  false
-                );
+                try {
+                  const saved = await this.saveActivity(
+                    activityDetail.userId,
+                    summary,
+                    false,
+                    false
+                  );
+                  console.log(
+                    `[Webhook] ✅ Activity saved: ${saved.garminActivityId}`
+                  );
+                } catch (error) {
+                  console.error(
+                    `[Webhook] ❌ Failed to save activity ${activityDetail.activityId}:`,
+                    error
+                  );
+                  throw error;
+                }
               }
             }
           }
