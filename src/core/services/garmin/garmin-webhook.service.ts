@@ -74,40 +74,62 @@ export class GarminWebhookService {
       `[saveActivity] ✅ Found connection, userId: ${connection.userId}`
     );
 
+    // Activity ID는 문자열로 변환 (숫자로 올 수 있음)
+    const activityId =
+      activityData.activityId?.toString() ||
+      activityData.summaryId?.toString();
+
+    if (!activityId) {
+      console.error(
+        "[saveActivity] ❌ No activityId or summaryId in data:",
+        activityData
+      );
+      throw new Error("Missing activityId or summaryId");
+    }
+
     const activityRecord = {
       userId: connection.userId,
-      garminActivityId: (activityData.activityId ||
-        activityData.summaryId) as string,
-      activityName: activityData.activityName as string | undefined,
-      activityType: (activityData.activityType as string) || "other",
+      garminActivityId: activityId,
+      activityName: (activityData.activityName as string) || "Unnamed Activity",
+      activityType: (activityData.activityType as string) || "UNKNOWN",
       startTime: new Date((activityData.startTimeInSeconds as number) * 1000),
       endTime: activityData.endTimeInSeconds
         ? new Date((activityData.endTimeInSeconds as number) * 1000)
+        : activityData.durationInSeconds
+        ? new Date(
+            ((activityData.startTimeInSeconds as number) +
+              (activityData.durationInSeconds as number)) *
+              1000
+          )
         : null,
-      durationSeconds: activityData.durationInSeconds as number | undefined,
-      distanceMeters: activityData.distanceInMeters as number | undefined,
-      calories: (activityData.activeKilocalories || activityData.calories) as
-        | number
-        | undefined,
+      durationSeconds: activityData.durationInSeconds as number | null,
+      distanceMeters: activityData.distanceInMeters as number | null,
+      calories: (activityData.activeKilocalories ||
+        activityData.calories) as number | null,
       avgHeartRate: activityData.averageHeartRateInBeatsPerMinute as
         | number
-        | undefined,
-      maxHeartRate: activityData.maxHeartRateInBeatsPerMinute as
-        | number
-        | undefined,
-      minHeartRate: activityData.minHeartRateInBeatsPerMinute as
-        | number
-        | undefined,
-      steps: activityData.steps as number | undefined,
-      floorsClimbed: activityData.floorsClimbed as number | undefined,
-      intensityMinutes: activityData.moderateIntensityMinutes as
-        | number
-        | undefined,
-      stressLevel: activityData.averageStressLevel as number | undefined,
+        | null,
+      maxHeartRate: activityData.maxHeartRateInBeatsPerMinute as number | null,
+      minHeartRate: activityData.minHeartRateInBeatsPerMinute as number | null,
+      steps: (activityData.steps || activityData.pushes) as number | null,
+      floorsClimbed: (activityData.floorsClimbed ||
+        activityData.totalElevationGainInMeters) as number | null,
+      intensityMinutes: activityData.moderateIntensityMinutes as number | null,
+      stressLevel: activityData.averageStressLevel as number | null,
       isManual,
       isAutoDetected,
       rawData: activityData as never,
     };
+
+    console.log(
+      `[saveActivity] Activity record prepared:`,
+      JSON.stringify({
+        garminActivityId: activityRecord.garminActivityId,
+        activityType: activityRecord.activityType,
+        startTime: activityRecord.startTime,
+        userId: activityRecord.userId,
+      })
+    );
 
     console.log(
       `[saveActivity] Upserting activity: ${activityRecord.garminActivityId}`
