@@ -327,4 +327,3 @@ export const paymentsRoutes = new Elysia({ prefix: "/studio/payments" })
       }),
     }
   );
-
