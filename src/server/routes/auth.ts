@@ -89,7 +89,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   .get(
     "/garmin/callback",
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async ({ query, set }: any) => {
+    async ({ query }: any) => {
       console.log("🔗 [Garmin OAuth] Callback received");
 
       try {
@@ -192,7 +192,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         const baseUrl =
           process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
         const redirectUrl = `${baseUrl}/garmin-test?success=true&user_id=${userId}`;
-        
+
         return new Response(null, {
           status: 302,
           headers: {
@@ -229,7 +229,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         const redirectUrl = `${baseUrl}/garmin-test?error=${encodeURIComponent(
           errorMessage
         )}`;
-        
+
         return new Response(null, {
           status: 302,
           headers: {
