@@ -269,7 +269,6 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
 
         const limitNum = parseInt(limit);
         const offsetNum = parseInt(offset);
-        const shouldForceSync = force_sync === "true";
 
         // Garmin Health API는 Webhook 전용!
         // 직접 Pull 방식으로 데이터를 가져올 수 없음
@@ -397,7 +396,6 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         start_date: t.Optional(t.String()),
         end_date: t.Optional(t.String()),
         activity_type: t.Optional(t.String()),
-        force_sync: t.Optional(t.String()),
       }),
     }
   )
@@ -784,7 +782,6 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
       query: t.Object({
         user_id: t.String(),
         period: t.Optional(t.String()),
-        force_sync: t.Optional(t.String()),
       }),
     }
   )

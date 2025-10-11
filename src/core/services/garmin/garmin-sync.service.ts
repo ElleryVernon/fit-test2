@@ -75,7 +75,9 @@ export class GarminSyncService {
         return {
           requested: false,
           status: "cooldown",
-          message: `Please wait ${Math.ceil((BACKFILL_COOLDOWN_MS - timeSince) / 1000)}s before requesting again.`,
+          message: `Please wait ${Math.ceil(
+            (BACKFILL_COOLDOWN_MS - timeSince) / 1000
+          )}s before requesting again.`,
         };
       }
     }
@@ -150,9 +152,7 @@ export class GarminSyncService {
 
       // 기타 에러
       const errorText = await response.text();
-      console.error(
-        `[GarminBackfill] Error ${response.status}: ${errorText}`
-      );
+      console.error(`[GarminBackfill] Error ${response.status}: ${errorText}`);
 
       return {
         requested: false,
