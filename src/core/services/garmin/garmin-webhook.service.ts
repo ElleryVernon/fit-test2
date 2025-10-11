@@ -181,7 +181,11 @@ export class GarminWebhookService {
             );
 
             for (const activityData of payload.activities) {
-              const activity = activityData as Record<string, unknown>;
+              const activity = activityData as {
+                userId: string;
+                activityId: number;
+                [key: string]: unknown;
+              };
               
               console.log(
                 `[Webhook] Processing activity ${activity.activityId} for user ${activity.userId}`
@@ -189,8 +193,8 @@ export class GarminWebhookService {
 
               try {
                 const saved = await this.saveActivity(
-                  activity.userId as string,
-                  activity,
+                  activity.userId,
+                  activity as Record<string, unknown>,
                   false,
                   false
                 );
