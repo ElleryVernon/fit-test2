@@ -368,9 +368,7 @@ export class GarminWebhookService {
             );
 
             for (const dereg of payload.deregistrations) {
-              console.log(
-                `[Webhook] Deregistering user ${dereg.userId}`
-              );
+              console.log(`[Webhook] Deregistering user ${dereg.userId}`);
 
               try {
                 // 연결 삭제
@@ -382,10 +380,7 @@ export class GarminWebhookService {
                   `[Webhook] ✅ User deregistered: ${dereg.userId} (${deleted.count} connections deleted)`
                 );
               } catch (error) {
-                console.error(
-                  `[Webhook] ❌ Failed to deregister user:`,
-                  error
-                );
+                console.error(`[Webhook] ❌ Failed to deregister user:`, error);
                 throw error;
               }
             }
@@ -401,7 +396,9 @@ export class GarminWebhookService {
 
             for (const permChange of payload.userPermissionsChange) {
               console.log(
-                `[Webhook] Permission change for user ${permChange.userId}: ${permChange.permissions.join(", ")}`
+                `[Webhook] Permission change for user ${
+                  permChange.userId
+                }: ${permChange.permissions.join(", ")}`
               );
 
               try {
