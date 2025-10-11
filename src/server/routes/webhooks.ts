@@ -51,9 +51,13 @@ const createWebhookHandler = (webhookType: string) => {
         `✅ [${webhookType}] Webhook log saved with ID: ${webhook.id}`
       );
 
-      // 3. 비동기 처리 (즉시 200 응답 반환)
-      console.log(`⚡ [${webhookType}] Starting async processing...`);
-      garminWebhookService.processWebhook(webhook.id).catch((error) => {
+      // 3. 동기 처리 (Vercel 서버리스 환경에서 await 필수!)
+      console.log(`⚡ [${webhookType}] Processing webhook synchronously...`);
+      
+      try {
+        await garminWebhookService.processWebhook(webhook.id);
+        console.log(`✅ [${webhookType}] Webhook processing completed`);
+      } catch (error) {
         console.error(
           `❌ [${webhookType}] Failed to process webhook ${webhook.id}:`,
           error instanceof Error ? error.message : error
@@ -62,13 +66,17 @@ const createWebhookHandler = (webhookType: string) => {
           console.error(`💥 [${webhookType}] Stack trace:`, error.stack);
         }
         // 에러 전체 출력
-        console.error(`💥 [${webhookType}] Full error:`, JSON.stringify(error, null, 2));
-      });
+        console.error(
+          `💥 [${webhookType}] Full error:`,
+          JSON.stringify(error, null, 2)
+        );
+        // 에러가 나도 200 반환 (가민 재시도 방지)
+      }
 
       // 4. Garmin에 성공 응답
       const processingTime = Date.now() - startTime;
       console.log(
-        `🎉 [${webhookType}] Webhook processed successfully in ${processingTime}ms`
+        `🎉 [${webhookType}] Webhook handled in ${processingTime}ms`
       );
 
       // CORS 헤더 설정
@@ -208,10 +216,7 @@ export const webhookRoutes = new Elysia({ prefix: "/webhook/garmin" })
       // 실패한 로그만 (디버깅용)
       const failed = await prisma.webhookLog.findMany({
         where: {
-          OR: [
-            { status: "failed" },
-            { errorMessage: { not: null } },
-          ],
+          OR: [{ status: "failed" }, { errorMessage: { not: null } }],
         },
         orderBy: { createdAt: "desc" },
         take: 5,
