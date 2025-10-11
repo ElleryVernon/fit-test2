@@ -281,7 +281,9 @@ export class GarminWebhookService {
 
             for (const moveIQ of payload.moveIQActivities) {
               console.log(
-                `[Webhook] Processing MoveIQ ${moveIQ.activityType}${moveIQ.activitySubType ? ` (${moveIQ.activitySubType})` : ""} for user ${moveIQ.userId}`
+                `[Webhook] Processing MoveIQ ${moveIQ.activityType}${
+                  moveIQ.activitySubType ? ` (${moveIQ.activitySubType})` : ""
+                } for user ${moveIQ.userId}`
               );
 
               try {

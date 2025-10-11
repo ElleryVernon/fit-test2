@@ -60,11 +60,19 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
 
         // 로그 기록
         console.log("Starting Garmin OAuth 2.0 PKCE for user:", user_id);
+        console.log("Redirect URL:", authUrl);
 
-        // 리다이렉트 (Elysia에서는 set.redirect 사용)
-        set.redirect = authUrl;
+        // 리다이렉트 (Response 객체 직접 반환)
         set.status = 302;
-        return;
+        set.headers["Location"] = authUrl;
+        set.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: authUrl,
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+          },
+        });
       } catch (error) {
         console.error("Failed to start Garmin OAuth:", error);
         set.status = 500;
@@ -104,11 +112,17 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
           // 리다이렉트
           const baseUrl =
             process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-          set.redirect = `${baseUrl}/garmin-test?error=${encodeURIComponent(
+          const redirectUrl = `${baseUrl}/garmin-test?error=${encodeURIComponent(
             errorMessage
           )}`;
-          set.status = 302;
-          return;
+
+          return new Response(null, {
+            status: 302,
+            headers: {
+              Location: redirectUrl,
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+            },
+          });
         }
 
         // State 검증
@@ -116,11 +130,17 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
           console.error("❌ [Garmin OAuth] No state parameter received");
           const baseUrl =
             process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-          set.redirect = `${baseUrl}/garmin-test?error=${encodeURIComponent(
+          const redirectUrl = `${baseUrl}/garmin-test?error=${encodeURIComponent(
             "Invalid state"
           )}`;
-          set.status = 302;
-          return;
+
+          return new Response(null, {
+            status: 302,
+            headers: {
+              Location: redirectUrl,
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+            },
+          });
         }
 
         console.log("🔍 [Garmin OAuth] Verifying state:", state);
@@ -129,11 +149,17 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
           console.error("❌ [Garmin OAuth] Invalid or expired state:", state);
           const baseUrl =
             process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-          set.redirect = `${baseUrl}/garmin-test?error=${encodeURIComponent(
+          const redirectUrl = `${baseUrl}/garmin-test?error=${encodeURIComponent(
             "Invalid or expired state"
           )}`;
-          set.status = 302;
-          return;
+
+          return new Response(null, {
+            status: 302,
+            headers: {
+              Location: redirectUrl,
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+            },
+          });
         }
 
         const { userId, codeVerifier } = stateData;
@@ -165,9 +191,15 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         // 성공 리다이렉트
         const baseUrl =
           process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-        set.redirect = `${baseUrl}/garmin-test?success=true&user_id=${userId}`;
-        set.status = 302;
-        return;
+        const redirectUrl = `${baseUrl}/garmin-test?success=true&user_id=${userId}`;
+        
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: redirectUrl,
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+          },
+        });
       } catch (error) {
         console.error("❌ [Garmin OAuth] Callback error:", error);
         console.error(
@@ -194,11 +226,17 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         );
         const baseUrl =
           process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-        set.redirect = `${baseUrl}/garmin-test?error=${encodeURIComponent(
+        const redirectUrl = `${baseUrl}/garmin-test?error=${encodeURIComponent(
           errorMessage
         )}`;
-        set.status = 302;
-        return;
+        
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: redirectUrl,
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+          },
+        });
       }
     },
     {
