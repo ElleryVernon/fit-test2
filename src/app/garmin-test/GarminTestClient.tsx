@@ -29,6 +29,10 @@ const GoogleIcon = () => (
 interface ConnectionStatus {
   connected: boolean;
   garmin_user_id?: string;
+  needs_reauth?: boolean;
+  scopes?: string[];
+  connected_at?: Date;
+  last_updated?: Date;
   recent_activities?: number;
   message?: string;
 }
@@ -43,10 +47,12 @@ interface ApiResponse {
 
 interface GarminTestClientProps {
   initialUser: User | null;
+  initialConnectionStatus: ConnectionStatus | null;
 }
 
 export default function GarminTestClient({
   initialUser,
+  initialConnectionStatus,
 }: GarminTestClientProps) {
   const [user, setUser] = useState<User | null>(initialUser);
   const [loading, setLoading] = useState(false);
@@ -54,12 +60,20 @@ export default function GarminTestClient({
     new Set()
   );
   const [connectionStatus, setConnectionStatus] =
-    useState<ConnectionStatus | null>(null);
+    useState<ConnectionStatus | null>(initialConnectionStatus);
   const [apiResponses, setApiResponses] = useState<Record<string, ApiResponse>>(
     {}
   );
+  
+  // 초기 탭 설정: 연결 상태에 따라 자동 결정
+  const getInitialTab = () => {
+    if (!initialUser) return "auth";
+    if (initialConnectionStatus?.connected) return "apis";
+    return "garmin";
+  };
+  
   const [activeTab, setActiveTab] = useState<"auth" | "garmin" | "apis">(
-    initialUser ? "garmin" : "auth"
+    getInitialTab()
   );
 
   // URL 파라미터 체크 (Garmin OAuth 결과 처리)
@@ -71,11 +85,8 @@ export default function GarminTestClient({
 
       if (success === "true") {
         alert("Garmin 연동이 성공적으로 완료되었습니다!");
-        window.history.replaceState({}, "", "/garmin-test");
-        // 연결 성공 시 즉시 상태 확인
-        if (user) {
-          checkGarminConnection(user.id);
-        }
+        // URL 정리 후 페이지 새로고침으로 최신 연결 상태 가져오기
+        window.location.href = "/garmin-test";
       } else if (error) {
         alert(
           `Garmin 연동 중 오류가 발생했습니다: ${decodeURIComponent(error)}`
@@ -83,35 +94,21 @@ export default function GarminTestClient({
         window.history.replaceState({}, "", "/garmin-test");
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 사용자 로그인 상태 변경 처리
+  // 사용자 로그인 상태 변경 처리 (런타임 로그인 시에만)
   useEffect(() => {
-    if (user) {
-      // 로그인 직후에만 가민 연결 상태 체크 (불필요한 API 호출 방지)
-      if (!connectionStatus) {
-        checkGarminConnection(user.id);
-      }
-    } else {
+    // 초기 렌더링이 아닌 경우에만 실행 (user가 변경된 경우)
+    if (user && user !== initialUser) {
+      // 새로 로그인한 경우에만 연결 상태 확인
+      checkGarminConnection(user.id);
+    } else if (!user && initialUser) {
+      // 로그아웃한 경우
       setConnectionStatus(null);
       setApiResponses({});
       setActiveTab("auth");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
-  // 연결 상태에 따라 적절한 탭으로 전환
-  useEffect(() => {
-    if (user && connectionStatus) {
-      if (connectionStatus.connected) {
-        setActiveTab("apis");
-      } else if (activeTab === "auth") {
-        setActiveTab("garmin");
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectionStatus]);
+  }, [user, initialUser]);
 
   const checkGarminConnection = async (userId: string) => {
     try {
@@ -138,11 +135,12 @@ export default function GarminTestClient({
       await authClient.signIn.social({
         provider: "google",
         callbackURL: "/garmin-test",
+        // 로그인 성공 시 페이지 새로고침으로 SSR 데이터 가져오기
       });
+      // Better Auth가 자동으로 리다이렉트하므로 별도 처리 불필요
     } catch (error) {
       console.error("Google sign in error:", error);
       alert(error instanceof Error ? error.message : "Google sign in failed");
-    } finally {
       setLoading(false);
     }
   };
@@ -152,10 +150,13 @@ export default function GarminTestClient({
       await authClient.signOut({
         fetchOptions: {
           onSuccess: () => {
+            // 상태 초기화
             setUser(null);
             setConnectionStatus(null);
             setApiResponses({});
             setActiveTab("auth");
+            // 페이지 새로고침으로 SSR 데이터도 초기화
+            window.location.href = "/garmin-test";
           },
         },
       });
@@ -196,7 +197,7 @@ export default function GarminTestClient({
     params: Record<string, string> = {}
   ) => {
     if (!user) return;
-    
+
     // 엔드포인트별 로딩 상태 관리
     const endpointKey = `${endpoint}_${JSON.stringify(params)}`;
     setLoadingEndpoints((prev) => new Set(prev).add(endpointKey));
@@ -398,9 +399,20 @@ export default function GarminTestClient({
                   </p>
                 </div>
                 <button
-                  onClick={() => checkGarminConnection(user.id)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  onClick={() => {
+                    setLoading(true);
+                    checkGarminConnection(user.id).finally(() =>
+                      setLoading(false)
+                    );
+                  }}
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 relative"
                 >
+                  {loading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-blue-600 bg-opacity-90 rounded-lg">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    </div>
+                  )}
                   🔄 연결 상태 새로고침
                 </button>
                 <button
