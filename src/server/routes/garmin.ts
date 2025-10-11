@@ -346,6 +346,12 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
 
         // 데이터가 없으면 Webhook 대기 안내
         if (activities.length === 0) {
+          // 디버깅 정보 추가
+          const connection = await prisma.garminConnection.findFirst({
+            where: { userId: user_id },
+            select: { garminUserId: true, createdAt: true },
+          });
+
           return {
             activities: [],
             pagination: {
@@ -355,10 +361,20 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
               has_more: false,
             },
             message:
-              "No activity data yet. Activities will appear automatically when you sync your Garmin device.",
+              "No activity data yet. Request backfill to get historical data.",
             webhook_info: {
               status: "waiting",
               note: "Garmin Health API uses webhooks. Data will be pushed automatically when you sync your device.",
+            },
+            debug: {
+              user_id: user_id,
+              garmin_user_id: connection?.garminUserId || "not_connected",
+              connected_at: connection?.createdAt,
+              next_steps: [
+                "1. Request backfill: POST /api/garmin/backfill",
+                "2. Sync your Garmin device with Garmin Connect app",
+                "3. Wait for webhook to deliver data (usually < 5 minutes)",
+              ],
             },
           };
         }
