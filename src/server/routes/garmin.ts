@@ -210,11 +210,11 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           : Infinity;
         const isStale = dataAge > 10 * 60 * 1000; // 10분
 
-        // 데이터가 오래되었고 토큰이 유효하면 백그라운드 동기화
+        // 데이터가 오래되었으면 Backfill 요청 안내
         if (isStale && !tokenExpired && !connection.needsReauth) {
-          garminSyncService
-            .syncInBackground(user_id, connection.accessToken)
-            .catch((err) => console.error("[API] Background sync error:", err));
+          console.log(
+            `[API] Data is stale for user ${user_id}. Consider requesting backfill.`
+          );
         }
 
         // 캐싱 헤더 추가
@@ -271,56 +271,9 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         const offsetNum = parseInt(offset);
         const shouldForceSync = force_sync === "true";
 
-        // 스마트 동기화: 데이터가 오래되었으면 가민 API에서 가져오기 (블로킹)
-        let syncStatus: { synced?: number; status: string } | null = null;
-
-        if (shouldForceSync || offsetNum === 0) {
-          // 첫 페이지 로드 시에만 동기화 체크
-          const validation = await garminSyncService.validateConnection(
-            user_id
-          );
-
-          if (!validation.valid || !validation.connection) {
-            set.status = 401;
-            return {
-              error: "Garmin connection invalid or expired",
-              needs_reauth: true,
-              message: "Please reconnect your Garmin account",
-            };
-          }
-
-          const isStale = await garminSyncService.isDataStale(user_id);
-
-          if (isStale || shouldForceSync) {
-            console.log(
-              `[API] Data is stale, syncing from Garmin API for user ${user_id}`
-            );
-
-            // 블로킹 동기화: 결과를 기다림
-            syncStatus = await garminSyncService.syncActivities(
-              user_id,
-              validation.connection.accessToken,
-              {
-                startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-              }
-            );
-
-            // 동기화 실패 시 에러 반환
-            if (syncStatus.status === "error") {
-              set.status = 503;
-              return {
-                error: "Failed to sync activities from Garmin API",
-                message:
-                  "Could not fetch latest data from Garmin. Please try again later.",
-                has_cached_data: true,
-              };
-            }
-
-            console.log(
-              `[API] Sync completed: ${syncStatus.synced} activities synced`
-            );
-          }
-        }
+        // Garmin Health API는 Webhook 전용!
+        // 직접 Pull 방식으로 데이터를 가져올 수 없음
+        // Webhook으로 들어온 데이터만 DB에서 조회
 
         // 쿼리 조건 빌드
         const whereConditions: Record<string, unknown> = {
@@ -393,6 +346,25 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           is_auto_detected: activity.isAutoDetected,
         }));
 
+        // 데이터가 없으면 Webhook 대기 안내
+        if (activities.length === 0) {
+          return {
+            activities: [],
+            pagination: {
+              total: 0,
+              limit: limitNum,
+              offset: offsetNum,
+              has_more: false,
+            },
+            message:
+              "No activity data yet. Activities will appear automatically when you sync your Garmin device.",
+            webhook_info: {
+              status: "waiting",
+              note: "Garmin Health API uses webhooks. Data will be pushed automatically when you sync your device.",
+            },
+          };
+        }
+
         // 캐싱 헤더 추가
         set.headers["Cache-Control"] =
           "public, s-maxage=60, stale-while-revalidate=120";
@@ -405,16 +377,11 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
             offset: offsetNum,
             has_more: activities.length === limitNum,
           },
-          sync_info: syncStatus
-            ? {
-                synced: syncStatus.synced,
-                status: syncStatus.status,
-                freshly_synced: true,
-              }
-            : {
-                freshly_synced: false,
-                message: "Using cached data (< 10 minutes old)",
-              },
+          webhook_info: {
+            status: "received",
+            last_update: activities[0]?.startTime,
+            total_activities: formattedActivities.length,
+          },
         };
       } catch (error) {
         console.error("Activities fetch error:", error);
@@ -686,42 +653,8 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         const days = parseInt(period);
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - days);
-        const shouldForceSync = force_sync === "true";
-
-        // 스마트 동기화: 통계 조회 전에 최신 데이터 확인
-        const validation = await garminSyncService.validateConnection(user_id);
-
-        if (!validation.valid || !validation.connection) {
-          set.status = 401;
-          return {
-            error: "Garmin connection invalid or expired",
-            needs_reauth: true,
-          };
-        }
-
-        const isStale = await garminSyncService.isDataStale(user_id);
-
-        if (isStale || shouldForceSync) {
-          console.log(`[API] Syncing activities for stats (user: ${user_id})`);
-
-          // 블로킹 동기화
-          const syncResult = await garminSyncService.syncActivities(
-            user_id,
-            validation.connection.accessToken,
-            {
-              startDate: new Date(
-                startDate.getTime() - days * 24 * 60 * 60 * 1000
-              ),
-            }
-          );
-
-          if (syncResult.status === "error") {
-            console.warn(
-              `[API] Sync failed for stats, using cached data if available`
-            );
-            // 통계는 오래된 데이터라도 보여줌 (경고와 함께)
-          }
-        }
+        // Garmin Health API는 Webhook 전용
+        // DB에 저장된 데이터만 조회
 
         // 기간 내 활동 조회 (필요한 필드만 선택하여 성능 개선)
         const activities = await prisma.garminActivity.findMany({
@@ -855,12 +788,12 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
       }),
     }
   )
-  // POST /api/garmin/sync - 수동 동기화 (즉시 실행)
+  // POST /api/garmin/backfill - Backfill 요청 (비동기)
   .post(
-    "/sync",
+    "/backfill",
     async ({ body, set }) => {
       try {
-        const { user_id, force = false } = body;
+        const { user_id, summary_type = "dailies", days = 90 } = body;
 
         if (!user_id) {
           set.status = 400;
@@ -877,46 +810,47 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           };
         }
 
-        // 신선도 확인
-        if (!force) {
-          const isStale = await garminSyncService.isDataStale(user_id);
-          if (!isStale) {
-            return {
-              message: "Data is already fresh (< 10 minutes old)",
-              synced: 0,
-              status: "skip",
-            };
-          }
-        }
-
         console.log(
-          `[API] Manual sync requested for user ${user_id} (force: ${force})`
+          `[API] Backfill requested for user ${user_id} (type: ${summary_type}, days: ${days})`
         );
 
-        // 즉시 동기화 (블로킹)
-        const result = await garminSyncService.syncActivities(
+        // Backfill 요청
+        const result = await garminSyncService.requestBackfill(
           user_id,
           validation.connection.accessToken,
           {
-            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 최근 30일
+            summaryType: summary_type as "dailies" | "epochs" | "sleeps",
+            startDate: new Date(Date.now() - days * 24 * 60 * 60 * 1000),
           }
         );
 
+        if (result.status === "accepted") {
+          return {
+            success: true,
+            message:
+              "Backfill request accepted. Please sync your Garmin device to receive the data via webhook.",
+            status: result.status,
+            webhook_note:
+              "Data will appear automatically after you sync your Garmin device.",
+          };
+        }
+
         return {
-          message: "Sync completed",
-          synced: result.synced,
+          success: result.requested,
+          message: result.message,
           status: result.status,
         };
       } catch (error) {
-        console.error("[API] Manual sync error:", error);
+        console.error("[API] Backfill error:", error);
         set.status = 500;
-        return { error: "Failed to sync data" };
+        return { error: "Failed to request backfill" };
       }
     },
     {
       body: t.Object({
         user_id: t.String(),
-        force: t.Optional(t.Boolean()),
+        summary_type: t.Optional(t.String()),
+        days: t.Optional(t.Number()),
       }),
     }
   );
