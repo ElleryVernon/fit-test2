@@ -4,6 +4,7 @@ import { demoRoutes } from "@/server/routes/demo";
 import { subscribeRoutes } from "@/server/routes/subscribe";
 import { webhookRoutes } from "@/server/routes/webhooks";
 import { authRoutes } from "@/server/routes/auth";
+import { paymentsRoutes } from "@/server/routes/payments";
 
 /**
  * Elysia 메인 서버
@@ -23,6 +24,7 @@ const app = new Elysia({ prefix: "/api" })
   .use(demoRoutes)
   .use(subscribeRoutes)
   .use(webhookRoutes)
+  .use(paymentsRoutes)
   // 헬스 체크
   .get("/", () => ({
     status: "ok",
