@@ -205,9 +205,11 @@ export class GarminSyncService {
       // 1. Dailies (일간 요약) - 빠르고 안정적
       // 2. Epochs (15분 단위) - 상세하지만 느림
       // 3. Activities - Activity API (별도 권한 필요)
-      
-      console.log("[GarminSync] Fetching from Garmin Dailies API (recommended for activities)");
-      
+
+      console.log(
+        "[GarminSync] Fetching from Garmin Dailies API (recommended for activities)"
+      );
+
       // Garmin Health API: Dailies Summary 사용 (활동 데이터 포함)
       // 문서 참조: Section 7.1 Daily Summaries
       const response = await this.garminFetchWithRetry(
@@ -216,7 +218,11 @@ export class GarminSyncService {
       );
 
       const dailies = await response.json();
-      console.log(`[GarminSync] Received ${Array.isArray(dailies) ? dailies.length : 0} daily summaries`);
+      console.log(
+        `[GarminSync] Received ${
+          Array.isArray(dailies) ? dailies.length : 0
+        } daily summaries`
+      );
 
       // Daily summaries를 Activity 형식으로 변환
       const activities: GarminActivity[] = Array.isArray(dailies)
@@ -227,15 +233,19 @@ export class GarminSyncService {
               activityName: `Daily Activity - ${daily.calendarDate}`,
               activityType: daily.activityType || "WALKING",
               startTimeInSeconds: daily.startTimeInSeconds,
-              durationInSeconds: daily.activeTimeInSeconds || daily.durationInSeconds,
+              durationInSeconds:
+                daily.activeTimeInSeconds || daily.durationInSeconds,
               distanceInMeters: daily.distanceInMeters,
               activeKilocalories: daily.activeKilocalories,
-              averageHeartRateInBeatsPerMinute: daily.averageHeartRateInBeatsPerMinute,
+              averageHeartRateInBeatsPerMinute:
+                daily.averageHeartRateInBeatsPerMinute,
               maxHeartRateInBeatsPerMinute: daily.maxHeartRateInBeatsPerMinute,
               minHeartRateInBeatsPerMinute: daily.minHeartRateInBeatsPerMinute,
               steps: daily.steps,
-              moderateIntensityDurationInSeconds: daily.moderateIntensityDurationInSeconds,
-              vigorousIntensityDurationInSeconds: daily.vigorousIntensityDurationInSeconds,
+              moderateIntensityDurationInSeconds:
+                daily.moderateIntensityDurationInSeconds,
+              vigorousIntensityDurationInSeconds:
+                daily.vigorousIntensityDurationInSeconds,
               floorsClimbed: daily.floorsClimbed,
               isManual: false,
               calendarDate: daily.calendarDate,
