@@ -6,6 +6,7 @@ AI 기반 운동 지능 플랫폼인 Fitculator의 랜딩 페이지입니다.
 
 - **프레임워크**: Next.js 15 + React 19
 - **언어**: TypeScript
+- **API 프레임워크**: Elysia (고성능 타입 안전 API)
 - **스타일링**: Tailwind CSS 4
 - **인증**: Better Auth
 - **데이터베이스**: PostgreSQL + Prisma ORM
@@ -96,6 +97,13 @@ src/
 │   ├── globals.css         # 전역 스타일
 │   ├── layout.tsx          # 루트 레이아웃
 │   └── page.tsx            # 홈페이지
+├── server/                 # Elysia API 서버
+│   └── routes/             # API 라우트 정의
+│       ├── auth.ts         # Auth/OAuth API 라우트
+│       ├── garmin.ts       # Garmin API 라우트
+│       ├── demo.ts         # 데모 요청 라우트
+│       ├── subscribe.ts    # 구독 라우트
+│       └── webhooks.ts     # Webhook API 라우트
 ├── components/             # React 컴포넌트
 │   ├── features/           # 기능별 컴포넌트
 │   │   ├── home/           # 홈 페이지 컴포넌트
@@ -120,9 +128,9 @@ src/
 ├── constants/              # 상수 정의
 ├── validators/             # 입력 검증 및 스키마
 └── utils/                  # 유틸리티 함수
-    ├── languageUtils.ts    # 언어 유틸리티
-    ├── slackNotifier.ts    # Slack 알림
-    └── translations.ts     # 번역 데이터
+   ├── languageUtils.ts    # 언어 유틸리티
+   ├── slackNotifier.ts    # Slack 알림
+   └── translations.ts     # 번역 데이터
 ```
 
 ## 🔧 사용 가능한 스크립트
@@ -192,17 +200,51 @@ function MyComponent() {
 
 ## 🌐 API 엔드포인트
 
-### 인증
+> 💡 **Elysia API**: 대부분의 API가 고성능 타입 안전 Elysia 프레임워크로 구현되었습니다.
+> 자세한 내용은 [ELYSIA_MIGRATION.md](./ELYSIA_MIGRATION.md)를 참조하세요.
+
+### 헬스 체크
+
+- `GET /api` - API 서버 상태 확인
+
+### 인증 (Better Auth)
 
 - `GET /api/auth/session` - 세션 조회
 - `POST /api/auth/sign-in/social` - 소셜 로그인
 - `POST /api/auth/sign-out` - 로그아웃
 
-### 비즈니스 로직
+### Garmin API (Elysia)
 
-- `POST /api/request-demo` - 데모 요청
+- `GET /api/garmin/connection-status` - 연결 상태 조회
+- `GET /api/garmin/activities` - 활동 목록 조회 (페이지네이션, 필터링 지원)
+- `GET /api/garmin/stats` - 통계 조회 (기간별 통계, 트렌드 분석)
+- `GET /api/garmin/user-id` - Garmin 사용자 ID 조회
+- `GET /api/garmin/permissions` - 권한 조회
+- `POST /api/garmin/disconnect` - 연결 해제
+- `PUT /api/garmin/disconnect` - Soft disconnect (재인증 필요)
+
+### Auth/OAuth API (Elysia)
+
+- `POST /api/auth/callback/apple` - Apple 로그인 콜백
+- `GET /api/auth/garmin/start` - Garmin OAuth 시작
+- `GET /api/auth/garmin/callback` - Garmin OAuth 콜백
+
+### Webhook API (Elysia)
+
+- `POST /api/webhook/garmin/activities` - 활동 웹훅
+- `POST /api/webhook/garmin/activity-details` - 활동 상세 웹훅
+- `POST /api/webhook/garmin/activity-files` - 활동 파일 웹훅
+- `POST /api/webhook/garmin/manual-activities` - 수동 활동 웹훅
+- `POST /api/webhook/garmin/moveiq` - MoveIQ 웹훅
+- `POST /api/webhook/garmin/deregistrations` - 등록 해제 웹훅
+- `POST /api/webhook/garmin/permissions` - 권한 웹훅
+- `GET /api/webhook/garmin/status` - 웹훅 통계 조회
+- `POST /api/webhook/garmin/retry` - 실패한 웹훅 재처리 (관리자 전용)
+
+### 비즈니스 로직 (Elysia)
+
+- `POST /api/request-demo` - 데모 요청 제출
 - `POST /api/subscribe` - 뉴스레터 구독
-- `GET /api/garmin/connection-status` - Garmin 연결 상태
 
 ## 🚀 배포
 
@@ -224,6 +266,7 @@ bun run export
 
 ## 📚 추가 문서
 
+- [Elysia API 마이그레이션 가이드](./ELYSIA_MIGRATION.md) - Elysia 프레임워크 통합 및 성능 최적화
 - [프로젝트 구조 가이드](./PROJECT_STRUCTURE.md) - 상세한 프로젝트 구조 및 아키텍처 설명
 - [마이그레이션 가이드](./MIGRATION_GUIDE.md) - Supabase에서 Better Auth + Prisma로의 마이그레이션
 - [Garmin API 가이드](./GARMIN_API_GUIDE.md) - Garmin 연동 설정

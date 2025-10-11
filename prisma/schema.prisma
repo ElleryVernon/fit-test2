@@ -196,6 +196,7 @@ model GarminConnection {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("garmin_connections")
 }
 
@@ -226,6 +227,9 @@ model GarminActivity {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, startTime])
+  @@index([userId, createdAt])
+  @@index([userId, activityType])
   @@map("garmin_activities")
 }
 
@@ -243,6 +247,8 @@ model WebhookLog {
   processedAt  DateTime? @map("processed_at")
   createdAt    DateTime  @default(now()) @map("created_at")
 
+  @@index([garminUserId, createdAt])
+  @@index([status, createdAt])
   @@map("webhook_logs")
 }
 

@@ -58,8 +58,8 @@ export default function GarminTestPage() {
     "auth"
   );
 
+  // URL 파라미터 체크 (Garmin OAuth 결과 처리)
   useEffect(() => {
-    // URL 파라미터 체크 (Garmin OAuth 결과 처리)
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
       const success = urlParams.get("success");
@@ -67,31 +67,56 @@ export default function GarminTestPage() {
 
       if (success === "true") {
         alert("Garmin 연동이 성공적으로 완료되었습니다!");
-        // URL 정리
         window.history.replaceState({}, "", "/garmin-test");
+        // 연결 성공 시 즉시 상태 확인
+        if (user) {
+          checkGarminConnection(user.id);
+        }
       } else if (error) {
         alert(
           `Garmin 연동 중 오류가 발생했습니다: ${decodeURIComponent(error)}`
         );
-        // URL 정리
         window.history.replaceState({}, "", "/garmin-test");
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // 사용자 로그인 상태 변경 처리
+  useEffect(() => {
     if (user) {
-      setActiveTab("garmin");
-      checkGarminConnection(user.id);
+      // 로그인 직후에만 가민 연결 상태 체크 (불필요한 API 호출 방지)
+      if (!connectionStatus) {
+        checkGarminConnection(user.id);
+      }
     } else {
       setConnectionStatus(null);
       setApiResponses({});
       setActiveTab("auth");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // 연결 상태에 따라 적절한 탭으로 전환
+  useEffect(() => {
+    if (user && connectionStatus) {
+      if (connectionStatus.connected) {
+        setActiveTab("apis");
+      } else if (activeTab === "auth") {
+        setActiveTab("garmin");
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectionStatus]);
 
   const checkGarminConnection = async (userId: string) => {
     try {
       const response = await fetch(
-        `/api/garmin/connection-status?user_id=${userId}`
+        `/api/garmin/connection-status?user_id=${userId}`,
+        {
+          // 캐시를 사용하여 중복 요청 방지 (성능 개선)
+          next: { revalidate: 30 },
+        }
       );
       const data = await response.json();
       setConnectionStatus(data);
