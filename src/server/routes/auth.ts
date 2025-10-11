@@ -63,9 +63,6 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         console.log("Redirect URL:", authUrl);
 
         // 리다이렉트 (Response 객체 직접 반환)
-        set.status = 302;
-        set.headers["Location"] = authUrl;
-        set.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
         return new Response(null, {
           status: 302,
           headers: {
