@@ -45,9 +45,14 @@ interface GarminTestClientProps {
   initialUser: User | null;
 }
 
-export default function GarminTestClient({ initialUser }: GarminTestClientProps) {
+export default function GarminTestClient({
+  initialUser,
+}: GarminTestClientProps) {
   const [user, setUser] = useState<User | null>(initialUser);
   const [loading, setLoading] = useState(false);
+  const [loadingEndpoints, setLoadingEndpoints] = useState<Set<string>>(
+    new Set()
+  );
   const [connectionStatus, setConnectionStatus] =
     useState<ConnectionStatus | null>(null);
   const [apiResponses, setApiResponses] = useState<Record<string, ApiResponse>>(
@@ -191,7 +196,11 @@ export default function GarminTestClient({ initialUser }: GarminTestClientProps)
     params: Record<string, string> = {}
   ) => {
     if (!user) return;
-    setLoading(true);
+    
+    // 엔드포인트별 로딩 상태 관리
+    const endpointKey = `${endpoint}_${JSON.stringify(params)}`;
+    setLoadingEndpoints((prev) => new Set(prev).add(endpointKey));
+
     try {
       const queryParams = new URLSearchParams({
         user_id: user.id,
@@ -201,7 +210,7 @@ export default function GarminTestClient({ initialUser }: GarminTestClientProps)
       const data = await response.json();
       setApiResponses((prev) => ({
         ...prev,
-        [endpoint]: {
+        [endpointKey]: {
           status: response.status,
           data,
           timestamp: new Date().toISOString(),
@@ -210,14 +219,18 @@ export default function GarminTestClient({ initialUser }: GarminTestClientProps)
     } catch (error) {
       setApiResponses((prev) => ({
         ...prev,
-        [endpoint]: {
+        [endpointKey]: {
           status: "error",
           error: error instanceof Error ? error.message : "Unknown error",
           timestamp: new Date().toISOString(),
         },
       }));
     } finally {
-      setLoading(false);
+      setLoadingEndpoints((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(endpointKey);
+        return newSet;
+      });
     }
   };
 
@@ -412,9 +425,14 @@ export default function GarminTestClient({ initialUser }: GarminTestClientProps)
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button
                   onClick={() => testAPI("activities")}
-                  disabled={loading}
-                  className="p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-left"
+                  disabled={loadingEndpoints.has("activities_{}")}
+                  className="p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-left relative"
                 >
+                  {loadingEndpoints.has("activities_{}") && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-blue-600 bg-opacity-90 rounded-lg">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    </div>
+                  )}
                   <div className="font-medium">📊 활동 목록</div>
                   <div className="text-sm opacity-90">
                     GET /api/garmin/activities
@@ -423,9 +441,14 @@ export default function GarminTestClient({ initialUser }: GarminTestClientProps)
 
                 <button
                   onClick={() => testAPI("stats", { period: "7" })}
-                  disabled={loading}
-                  className="p-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-left"
+                  disabled={loadingEndpoints.has('stats_{"period":"7"}')}
+                  className="p-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-left relative"
                 >
+                  {loadingEndpoints.has('stats_{"period":"7"}') && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-purple-600 bg-opacity-90 rounded-lg">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    </div>
+                  )}
                   <div className="font-medium">📈 통계 (7일)</div>
                   <div className="text-sm opacity-90">
                     GET /api/garmin/stats
@@ -434,9 +457,14 @@ export default function GarminTestClient({ initialUser }: GarminTestClientProps)
 
                 <button
                   onClick={() => testAPI("user-id")}
-                  disabled={loading}
-                  className="p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-left"
+                  disabled={loadingEndpoints.has("user-id_{}")}
+                  className="p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-left relative"
                 >
+                  {loadingEndpoints.has("user-id_{}") && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-green-600 bg-opacity-90 rounded-lg">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    </div>
+                  )}
                   <div className="font-medium">👤 Garmin User ID</div>
                   <div className="text-sm opacity-90">
                     GET /api/garmin/user-id
@@ -445,9 +473,14 @@ export default function GarminTestClient({ initialUser }: GarminTestClientProps)
 
                 <button
                   onClick={() => testAPI("permissions")}
-                  disabled={loading}
-                  className="p-4 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 text-left"
+                  disabled={loadingEndpoints.has("permissions_{}")}
+                  className="p-4 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 text-left relative"
                 >
+                  {loadingEndpoints.has("permissions_{}") && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-yellow-600 bg-opacity-90 rounded-lg">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    </div>
+                  )}
                   <div className="font-medium">🔐 권한 조회</div>
                   <div className="text-sm opacity-90">
                     GET /api/garmin/permissions
@@ -456,9 +489,14 @@ export default function GarminTestClient({ initialUser }: GarminTestClientProps)
 
                 <button
                   onClick={() => testAPI("activities", { limit: "5" })}
-                  disabled={loading}
-                  className="p-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-left"
+                  disabled={loadingEndpoints.has('activities_{"limit":"5"}')}
+                  className="p-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-left relative"
                 >
+                  {loadingEndpoints.has('activities_{"limit":"5"}') && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-indigo-600 bg-opacity-90 rounded-lg">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    </div>
+                  )}
                   <div className="font-medium">📊 최근 5개 활동</div>
                   <div className="text-sm opacity-90">
                     GET /api/garmin/activities?limit=5
@@ -467,9 +505,14 @@ export default function GarminTestClient({ initialUser }: GarminTestClientProps)
 
                 <button
                   onClick={() => testAPI("stats", { period: "30" })}
-                  disabled={loading}
-                  className="p-4 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50 text-left"
+                  disabled={loadingEndpoints.has('stats_{"period":"30"}')}
+                  className="p-4 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50 text-left relative"
                 >
+                  {loadingEndpoints.has('stats_{"period":"30"}') && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-pink-600 bg-opacity-90 rounded-lg">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                    </div>
+                  )}
                   <div className="font-medium">📈 통계 (30일)</div>
                   <div className="text-sm opacity-90">
                     GET /api/garmin/stats?period=30
@@ -479,12 +522,35 @@ export default function GarminTestClient({ initialUser }: GarminTestClientProps)
             </div>
 
             {/* API 응답 표시 */}
-            {Object.keys(apiResponses).length > 0 && (
+            {(Object.keys(apiResponses).length > 0 ||
+              loadingEndpoints.size > 0) && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                   API 응답
                 </h3>
                 <div className="space-y-4">
+                  {/* 로딩 중인 API 스켈레톤 */}
+                  {Array.from(loadingEndpoints).map((endpoint) => (
+                    <div
+                      key={`loading-${endpoint}`}
+                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 animate-pulse"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="h-5 bg-gray-300 dark:bg-gray-600 rounded w-1/3"></div>
+                        <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-16"></div>
+                      </div>
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-2"></div>
+                      <div className="bg-gray-100 dark:bg-gray-900 p-3 rounded">
+                        <div className="space-y-2">
+                          <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-full"></div>
+                          <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-5/6"></div>
+                          <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-4/6"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* 실제 API 응답 */}
                   {Object.entries(apiResponses)
                     .sort(
                       (a, b) =>
@@ -528,7 +594,7 @@ export default function GarminTestClient({ initialUser }: GarminTestClientProps)
           </div>
         )}
 
-        {/* 로딩 오버레이 */}
+        {/* 로그인/연동 작업용 로딩 오버레이 (최소한으로 사용) */}
         {loading && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
@@ -541,4 +607,3 @@ export default function GarminTestClient({ initialUser }: GarminTestClientProps)
     </div>
   );
 }
-
