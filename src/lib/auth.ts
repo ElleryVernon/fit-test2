@@ -23,6 +23,12 @@ export const auth = betterAuth({
     updateAge: authConfig.session.updateAge,
   },
   baseURL: authConfig.baseURL,
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://fit-test2.vercel.app",
+    "https://fitculator.com",
+    "https://www.fitculator.com",
+  ],
 });
 
 export type Session = typeof auth.$Infer.Session.session;
