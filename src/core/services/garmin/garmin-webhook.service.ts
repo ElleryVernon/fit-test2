@@ -76,8 +76,7 @@ export class GarminWebhookService {
 
     // Activity ID는 문자열로 변환 (숫자로 올 수 있음)
     const activityId =
-      activityData.activityId?.toString() ||
-      activityData.summaryId?.toString();
+      activityData.activityId?.toString() || activityData.summaryId?.toString();
 
     if (!activityId) {
       console.error(
@@ -104,8 +103,9 @@ export class GarminWebhookService {
         : null,
       durationSeconds: activityData.durationInSeconds as number | null,
       distanceMeters: activityData.distanceInMeters as number | null,
-      calories: (activityData.activeKilocalories ||
-        activityData.calories) as number | null,
+      calories: (activityData.activeKilocalories || activityData.calories) as
+        | number
+        | null,
       avgHeartRate: activityData.averageHeartRateInBeatsPerMinute as
         | number
         | null,
@@ -141,9 +141,7 @@ export class GarminWebhookService {
       create: activityRecord,
     });
 
-    console.log(
-      `[saveActivity] ✅ Activity upserted successfully: ${data.id}`
-    );
+    console.log(`[saveActivity] ✅ Activity upserted successfully: ${data.id}`);
 
     return data;
   }
@@ -176,6 +174,38 @@ export class GarminWebhookService {
 
       switch (webhook.type) {
         case WEBHOOK_TYPES.ACTIVITIES:
+          // Activities Push Webhook 처리
+          if (Array.isArray(payload.activities)) {
+            console.log(
+              `[Webhook] Processing ${payload.activities.length} activities`
+            );
+
+            for (const activity of payload.activities) {
+              console.log(
+                `[Webhook] Processing activity ${activity.activityId} for user ${activity.userId}`
+              );
+
+              try {
+                const saved = await this.saveActivity(
+                  activity.userId,
+                  activity as Record<string, unknown>,
+                  false,
+                  false
+                );
+                console.log(
+                  `[Webhook] ✅ Activity saved: ${saved.garminActivityId}`
+                );
+              } catch (error) {
+                console.error(
+                  `[Webhook] ❌ Failed to save activity ${activity.activityId}:`,
+                  error
+                );
+                throw error;
+              }
+            }
+          }
+          break;
+
         case WEBHOOK_TYPES.ACTIVITY_DETAILS:
           // Activity Details Push Webhook 처리
           if (Array.isArray(payload.activityDetails)) {
@@ -185,7 +215,7 @@ export class GarminWebhookService {
 
             for (const activityDetail of payload.activityDetails) {
               console.log(
-                `[Webhook] Processing activity ${activityDetail.activityId} for user ${activityDetail.userId}`
+                `[Webhook] Processing activity detail ${activityDetail.activityId} for user ${activityDetail.userId}`
               );
 
               const summary = activityDetail.summary;
@@ -198,11 +228,11 @@ export class GarminWebhookService {
                     false
                   );
                   console.log(
-                    `[Webhook] ✅ Activity saved: ${saved.garminActivityId}`
+                    `[Webhook] ✅ Activity detail saved: ${saved.garminActivityId}`
                   );
                 } catch (error) {
                   console.error(
-                    `[Webhook] ❌ Failed to save activity ${activityDetail.activityId}:`,
+                    `[Webhook] ❌ Failed to save activity detail ${activityDetail.activityId}:`,
                     error
                   );
                   throw error;
