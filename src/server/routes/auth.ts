@@ -1,10 +1,9 @@
 import { Elysia, t } from "elysia";
-import { garminOAuthService } from "@/core/services";
 
 /**
  * Auth API 라우트 (OAuth 관련)
  * Better Auth 내장 핸들러는 제외하고 커스텀 OAuth 로직만 포함
- * 
+ *
  * 참고: Garmin OAuth는 /api/garmin/oauth/* 경로 사용
  * (Better Auth catch-all route와 충돌 방지)
  */

@@ -1,7 +1,6 @@
 import { Elysia, t } from "elysia";
 import { prisma } from "@/lib/db/client";
 import { garminOAuthService, garminSyncService } from "@/core/services";
-import { garminConfig } from "@/config";
 
 // 통계 계산용 타입
 type Activity = {
@@ -230,7 +229,9 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           return new Response(null, {
             status: 302,
             headers: {
-              Location: `${baseUrl}/garmin-test?error=${encodeURIComponent(errorMessage)}`,
+              Location: `${baseUrl}/garmin-test?error=${encodeURIComponent(
+                errorMessage
+              )}`,
               "Cache-Control": "no-cache, no-store, must-revalidate",
             },
           });
@@ -242,7 +243,9 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           return new Response(null, {
             status: 302,
             headers: {
-              Location: `${baseUrl}/garmin-test?error=${encodeURIComponent("Invalid state")}`,
+              Location: `${baseUrl}/garmin-test?error=${encodeURIComponent(
+                "Invalid state"
+              )}`,
               "Cache-Control": "no-cache, no-store, must-revalidate",
             },
           });
@@ -255,7 +258,9 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           return new Response(null, {
             status: 302,
             headers: {
-              Location: `${baseUrl}/garmin-test?error=${encodeURIComponent("Invalid or expired state")}`,
+              Location: `${baseUrl}/garmin-test?error=${encodeURIComponent(
+                "Invalid or expired state"
+              )}`,
               "Cache-Control": "no-cache, no-store, must-revalidate",
             },
           });
@@ -321,7 +326,9 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         return new Response(null, {
           status: 302,
           headers: {
-            Location: `${baseUrl}/garmin-test?error=${encodeURIComponent(errorMessage)}`,
+            Location: `${baseUrl}/garmin-test?error=${encodeURIComponent(
+              errorMessage
+            )}`,
             "Cache-Control": "no-cache, no-store, must-revalidate",
           },
         });
