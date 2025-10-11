@@ -1,6 +1,6 @@
 /**
  * Garmin 데이터 동기화 서비스
- * 
+ *
  * 10분 TTL 기반 캐시 전략:
  * - 데이터가 10분 이내면 DB에서 조회
  * - 10분 이상 경과 시 가민 API에서 갱신 후 DB 저장
@@ -19,7 +19,10 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
 // 동기화 상태 추적 (메모리 캐시)
-const syncStatus = new Map<string, { inProgress: boolean; lastAttempt: number }>();
+const syncStatus = new Map<
+  string,
+  { inProgress: boolean; lastAttempt: number }
+>();
 
 interface GarminActivity {
   summaryId: string;
@@ -218,7 +221,8 @@ export class GarminSyncService {
                   durationSeconds: activity.durationInSeconds || null,
                   distanceMeters: activity.distanceInMeters || null,
                   calories: activity.activeKilocalories || null,
-                  avgHeartRate: activity.averageHeartRateInBeatsPerMinute || null,
+                  avgHeartRate:
+                    activity.averageHeartRateInBeatsPerMinute || null,
                   maxHeartRate: activity.maxHeartRateInBeatsPerMinute || null,
                   minHeartRate: activity.minHeartRateInBeatsPerMinute || null,
                   steps: activity.steps || null,
@@ -229,7 +233,9 @@ export class GarminSyncService {
                       60 || null,
                   isManual: activity.isManual || false,
                   isAutoDetected: !activity.isManual,
-                  rawData: JSON.parse(JSON.stringify(activity)) as Prisma.InputJsonValue,
+                  rawData: JSON.parse(
+                    JSON.stringify(activity)
+                  ) as Prisma.InputJsonValue,
                   createdAt: new Date(),
                   updatedAt: new Date(),
                 },
@@ -239,7 +245,8 @@ export class GarminSyncService {
                   durationSeconds: activity.durationInSeconds || null,
                   distanceMeters: activity.distanceInMeters || null,
                   calories: activity.activeKilocalories || null,
-                  avgHeartRate: activity.averageHeartRateInBeatsPerMinute || null,
+                  avgHeartRate:
+                    activity.averageHeartRateInBeatsPerMinute || null,
                   maxHeartRate: activity.maxHeartRateInBeatsPerMinute || null,
                   minHeartRate: activity.minHeartRateInBeatsPerMinute || null,
                   steps: activity.steps || null,
@@ -248,7 +255,9 @@ export class GarminSyncService {
                     ((activity.moderateIntensityDurationInSeconds || 0) +
                       (activity.vigorousIntensityDurationInSeconds || 0)) /
                       60 || null,
-                  rawData: JSON.parse(JSON.stringify(activity)) as Prisma.InputJsonValue,
+                  rawData: JSON.parse(
+                    JSON.stringify(activity)
+                  ) as Prisma.InputJsonValue,
                   updatedAt: new Date(),
                 },
               });
@@ -275,9 +284,12 @@ export class GarminSyncService {
       return { synced, status: "success" };
     } catch (error) {
       console.error(`[GarminSync] Sync failed for user ${userId}:`, error);
-      
+
       // 토큰 만료 시 재인증 플래그 설정
-      if (error instanceof Error && error.message.includes("Authentication failed")) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Authentication failed")
+      ) {
         await prisma.garminConnection.updateMany({
           where: { userId },
           data: { needsReauth: true },
@@ -298,7 +310,10 @@ export class GarminSyncService {
     // Fire-and-forget: 결과를 기다리지 않음
     this.syncActivities(userId, accessToken, { background: true }).catch(
       (error) => {
-        console.error(`[GarminSync] Background sync failed for ${userId}:`, error);
+        console.error(
+          `[GarminSync] Background sync failed for ${userId}:`,
+          error
+        );
       }
     );
   }
@@ -391,4 +406,3 @@ export class GarminSyncService {
 
 // Singleton 인스턴스 export
 export const garminSyncService = new GarminSyncService();
-

@@ -214,9 +214,7 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         if (isStale && !tokenExpired && !connection.needsReauth) {
           garminSyncService
             .syncInBackground(user_id, connection.accessToken)
-            .catch((err) =>
-              console.error("[API] Background sync error:", err)
-            );
+            .catch((err) => console.error("[API] Background sync error:", err));
         }
 
         // 캐싱 헤더 추가
@@ -234,9 +232,7 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           data_freshness: {
             is_stale: isStale,
             last_sync: latestActivity?.createdAt,
-            age_minutes: latestActivity
-              ? Math.floor(dataAge / 60000)
-              : null,
+            age_minutes: latestActivity ? Math.floor(dataAge / 60000) : null,
           },
         };
       } catch (error) {
@@ -278,16 +274,15 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         // 백그라운드 동기화 (10분 TTL 기반)
         if (shouldForceSync || offsetNum === 0) {
           // 첫 페이지 로드 시에만 동기화 체크
-          const validation = await garminSyncService.validateConnection(user_id);
+          const validation = await garminSyncService.validateConnection(
+            user_id
+          );
           if (validation.valid && validation.connection) {
             const isStale = await garminSyncService.isDataStale(user_id);
             if (isStale || shouldForceSync) {
               // 논블로킹 동기화
               garminSyncService
-                .syncInBackground(
-                  user_id,
-                  validation.connection.accessToken
-                )
+                .syncInBackground(user_id, validation.connection.accessToken)
                 .catch((err) =>
                   console.error("[API] Activities sync error:", err)
                 );
@@ -659,9 +654,7 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
             // 논블로킹 동기화
             garminSyncService
               .syncInBackground(user_id, validation.connection.accessToken)
-              .catch((err) =>
-                console.error("[API] Stats sync error:", err)
-              );
+              .catch((err) => console.error("[API] Stats sync error:", err));
           }
         }
 
