@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { FiCreditCard, FiCheck, FiArrowRight, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/hooks';
 
 const TOSS_CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
 

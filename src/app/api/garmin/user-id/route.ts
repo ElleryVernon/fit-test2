@@ -1,66 +1,69 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase/client'
-import { fetchGarminUserId } from '@/lib/services/garmin/oauth'
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db/client";
+import { garminOAuthService } from "@/core/services";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.nextUrl.searchParams.get('user_id')
+    const userId = request.nextUrl.searchParams.get("user_id");
 
     if (!userId) {
       return NextResponse.json(
-        { error: 'user_id is required' },
+        { error: "user_id is required" },
         { status: 400 }
-      )
+      );
     }
 
     // 연결 정보 조회
-    const { data: connection, error } = await supabaseAdmin
-      .from('garmin_connections')
-      .select('access_token, garmin_user_id')
-      .eq('user_id', userId)
-      .single()
+    const connection = await prisma.garminConnection.findFirst({
+      where: { userId },
+      select: {
+        accessToken: true,
+        garminUserId: true,
+      },
+    });
 
-    if (error || !connection) {
+    if (!connection) {
       return NextResponse.json(
-        { error: 'No Garmin connection found' },
+        { error: "No Garmin connection found" },
         { status: 404 }
-      )
+      );
     }
 
     // 이미 저장된 Garmin User ID가 있으면 반환
-    if (connection.garmin_user_id) {
+    if (connection.garminUserId) {
       return NextResponse.json({
-        garmin_user_id: connection.garmin_user_id
-      })
+        garmin_user_id: connection.garminUserId,
+      });
     }
 
     // 없으면 Garmin API에서 조회
     try {
-      const garminUserId = await fetchGarminUserId(connection.access_token)
+      const garminUserId = await garminOAuthService.fetchGarminUserId(
+        connection.accessToken
+      );
 
       // DB에 저장
-      await supabaseAdmin
-        .from('garmin_connections')
-        .update({ garmin_user_id: garminUserId })
-        .eq('user_id', userId)
+      await prisma.garminConnection.updateMany({
+        where: { userId },
+        data: { garminUserId },
+      });
 
       return NextResponse.json({
-        garmin_user_id: garminUserId
-      })
+        garmin_user_id: garminUserId,
+      });
     } catch (apiError) {
-      console.error('Failed to fetch Garmin user ID:', apiError)
+      console.error("Failed to fetch Garmin user ID:", apiError);
       return NextResponse.json(
-        { error: 'Failed to fetch Garmin user ID' },
+        { error: "Failed to fetch Garmin user ID" },
         { status: 500 }
-      )
+      );
     }
-
   } catch (error) {
-    console.error('User ID endpoint error:', error)
+    console.error("User ID endpoint error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
 }
 
@@ -69,9 +72,9 @@ export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
     },
-  })
+  });
 }

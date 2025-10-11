@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks'
 
 export default function TestAuthPage() {
   const { user, signInWithGoogle, signOut, loading, error } = useAuth()

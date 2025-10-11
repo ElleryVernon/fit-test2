@@ -1,130 +1,141 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase/client'
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db/client";
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const userId = searchParams.get('user_id')
-    const limit = parseInt(searchParams.get('limit') || '20')
-    const offset = parseInt(searchParams.get('offset') || '0')
-    const startDate = searchParams.get('start_date')
-    const endDate = searchParams.get('end_date')
-    const activityType = searchParams.get('activity_type')
+    const searchParams = request.nextUrl.searchParams;
+    const userId = searchParams.get("user_id");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const offset = parseInt(searchParams.get("offset") || "0");
+    const startDate = searchParams.get("start_date");
+    const endDate = searchParams.get("end_date");
+    const activityType = searchParams.get("activity_type");
 
     if (!userId) {
       return NextResponse.json(
-        { error: 'user_id is required' },
+        { error: "user_id is required" },
         { status: 400 }
-      )
+      );
     }
 
-    // 쿼리 빌드
-    let query = supabaseAdmin
-      .from('garmin_activities')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId)
-      .order('start_time', { ascending: false })
-      .range(offset, offset + limit - 1)
+    // 쿼리 조건 빌드
+    const whereConditions: Record<string, unknown> = {
+      userId,
+    };
 
     // 날짜 필터
-    if (startDate) {
-      query = query.gte('start_time', new Date(startDate).toISOString())
-    }
-    if (endDate) {
-      query = query.lte('start_time', new Date(endDate).toISOString())
+    if (startDate || endDate) {
+      whereConditions.startTime = {};
+      if (startDate) {
+        (whereConditions.startTime as Record<string, unknown>).gte = new Date(
+          startDate
+        );
+      }
+      if (endDate) {
+        (whereConditions.startTime as Record<string, unknown>).lte = new Date(
+          endDate
+        );
+      }
     }
 
     // 활동 타입 필터
     if (activityType) {
-      query = query.eq('activity_type', activityType)
+      whereConditions.activityType = activityType;
     }
 
-    const { data: activities, error, count } = await query
-
-    if (error) {
-      throw error
-    }
+    const activities = await prisma.garminActivity.findMany({
+      where: whereConditions,
+      orderBy: { startTime: "desc" },
+      take: limit,
+      skip: offset,
+    });
 
     // 응답 데이터 정리
-    const formattedActivities = activities?.map(activity => ({
+    const formattedActivities = activities.map((activity) => ({
       id: activity.id,
-      activity_id: activity.garmin_activity_id,
-      name: activity.activity_name,
-      type: activity.activity_type,
-      start_time: activity.start_time,
-      duration_minutes: activity.duration_seconds ? Math.round(activity.duration_seconds / 60) : null,
-      distance_km: activity.distance_meters ? (activity.distance_meters / 1000).toFixed(2) : null,
+      activity_id: activity.garminActivityId,
+      name: activity.activityName,
+      type: activity.activityType,
+      start_time: activity.startTime,
+      duration_minutes: activity.durationSeconds
+        ? Math.round(activity.durationSeconds / 60)
+        : null,
+      distance_km: activity.distanceMeters
+        ? (activity.distanceMeters / 1000).toFixed(2)
+        : null,
       calories: activity.calories,
       heart_rate: {
-        avg: activity.avg_heart_rate,
-        max: activity.max_heart_rate,
-        min: activity.min_heart_rate
+        avg: activity.avgHeartRate,
+        max: activity.maxHeartRate,
+        min: activity.minHeartRate,
       },
       steps: activity.steps,
-      is_manual: activity.is_manual,
-      is_auto_detected: activity.is_auto_detected
-    }))
+      is_manual: activity.isManual,
+      is_auto_detected: activity.isAutoDetected,
+    }));
 
     return NextResponse.json({
-      activities: formattedActivities || [],
+      activities: formattedActivities,
       pagination: {
-        total: count || 0,
+        total: activities.length,
         limit,
         offset,
-        has_more: (count || 0) > offset + limit
-      }
-    })
-
+        has_more: activities.length === limit,
+      },
+    });
   } catch (error) {
-    console.error('Activities fetch error:', error)
+    console.error("Activities fetch error:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch activities' },
+      { error: "Failed to fetch activities" },
       { status: 500 }
-    )
+    );
   }
 }
 
 // 특정 활동 조회
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { user_id, activity_id } = body
+    const body = await request.json();
+    const { user_id, activity_id } = body;
 
     if (!user_id || !activity_id) {
       return NextResponse.json(
-        { error: 'user_id and activity_id are required' },
+        { error: "user_id and activity_id are required" },
         { status: 400 }
-      )
+      );
     }
 
-    const { data: activity, error } = await supabaseAdmin
-      .from('garmin_activities')
-      .select('*')
-      .eq('user_id', user_id)
-      .eq('garmin_activity_id', activity_id)
-      .single()
+    const activity = await prisma.garminActivity.findFirst({
+      where: {
+        userId: user_id,
+        garminActivityId: activity_id,
+      },
+    });
 
-    if (error || !activity) {
+    if (!activity) {
       return NextResponse.json(
-        { error: 'Activity not found' },
+        { error: "Activity not found" },
         { status: 404 }
-      )
+      );
     }
 
     return NextResponse.json({
       activity: {
         ...activity,
-        duration_minutes: activity.duration_seconds ? Math.round(activity.duration_seconds / 60) : null,
-        distance_km: activity.distance_meters ? (activity.distance_meters / 1000).toFixed(2) : null,
-      }
-    })
-
+        duration_minutes: activity.durationSeconds
+          ? Math.round(activity.durationSeconds / 60)
+          : null,
+        distance_km: activity.distanceMeters
+          ? (activity.distanceMeters / 1000).toFixed(2)
+          : null,
+      },
+    });
   } catch (error) {
-    console.error('Activity fetch error:', error)
+    console.error("Activity fetch error:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch activity' },
+      { error: "Failed to fetch activity" },
       { status: 500 }
-    )
+    );
   }
 }
 
@@ -133,9 +144,9 @@ export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
     },
-  })
+  });
 }

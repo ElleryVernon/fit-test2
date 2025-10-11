@@ -1,11 +1,11 @@
-import React from 'react';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import Hero from '@/components/home/Hero';
-import Features from '@/components/home/Features';
-import ClientLogos from '@/components/home/ClientLogos';
-import VisualDemo from '@/components/home/VisualDemo';
-import CTA from '@/components/home/CTA';
+import React from "react";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import Hero from "@/components/features/home/Hero";
+import Features from "@/components/features/home/Features";
+import ClientLogos from "@/components/features/home/ClientLogos";
+import VisualDemo from "@/components/features/home/VisualDemo";
+import CTA from "@/components/features/home/CTA";
 
 export default function Home() {
   return (

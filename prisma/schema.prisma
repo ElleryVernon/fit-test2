@@ -1,0 +1,248 @@
+// Prisma Schema for Fitculator Landing
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Better Auth 테이블들
+
+model User {
+  id               String    @id @default(cuid())
+  name             String
+  email            String    @unique
+  emailVerified    Boolean   @default(false) @map("email_verified")
+  image            String?
+  username         String?
+  googleId         String?   @unique @map("google_id")
+  appleId          String?   @unique @map("apple_id")
+  profileImageUrl  String?   @map("profile_image_url")
+  gender           String    @default("other")
+  birth            DateTime  @default(now()) @db.Date
+  linkedProviders  String[]  @default([]) @map("linked_providers")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  sessions           Session[]
+  accounts           Account[]
+  garminConnections  GarminConnection[]
+  garminActivities   GarminActivity[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  token     String   @unique
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Account {
+  id                      String    @id @default(cuid())
+  userId                  String    @map("user_id")
+  accountId               String    @map("account_id")
+  providerId              String    @map("provider_id")
+  accessToken             String?   @map("access_token")
+  refreshToken            String?   @map("refresh_token")
+  idToken                 String?   @map("id_token")
+  accessTokenExpiresAt    DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt   DateTime? @map("refresh_token_expires_at")
+  scope                   String?
+  password                String?
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("verifications")
+}
+
+// 애플리케이션 테이블들
+
+model DemoRequest {
+  id          String   @id @default(uuid()) @db.Uuid
+  companyName String   @map("company_name")
+  yourName    String   @map("your_name")
+  email       String
+  message     String
+  origin      String   @default("unknown")
+  requestedAt DateTime @default(now()) @map("requested_at")
+
+  @@map("demo_requests")
+}
+
+model NewsletterSubscriber {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  referrer     String?
+  origin       String
+  subscribedAt DateTime @default(now()) @map("subscribed_at")
+
+  @@map("newsletter_subscribers")
+}
+
+model ServiceType {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  subscriptionPlans SubscriptionPlan[]
+  subscriptions     Subscription[]
+
+  @@map("service_types")
+}
+
+model SubscriptionPlan {
+  id            String   @id @default(uuid()) @db.Uuid
+  serviceTypeId String?  @map("service_type_id") @db.Uuid
+  code          String   @unique
+  name          String
+  description   String?
+  price         Int
+  currency      String?  @default("KRW")
+  billingCycle  String?  @default("monthly") @map("billing_cycle")
+  features      Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  serviceType   ServiceType?   @relation(fields: [serviceTypeId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id")
+  planId        String?   @map("plan_id") @db.Uuid
+  serviceTypeId String?   @map("service_type_id") @db.Uuid
+  referenceId   String?   @map("reference_id")
+  referenceName String?   @map("reference_name")
+  status        String
+  startDate     DateTime  @map("start_date")
+  endDate       DateTime? @map("end_date")
+  autoRenew     Boolean   @default(true) @map("auto_renew")
+  metadata      Json?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  plan        SubscriptionPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  serviceType ServiceType?      @relation(fields: [serviceTypeId], references: [id], onDelete: SetNull)
+  payments    Payment[]
+
+  @@map("subscriptions")
+}
+
+model Payment {
+  id             String    @id @default(uuid()) @db.Uuid
+  subscriptionId String?   @map("subscription_id") @db.Uuid
+  userId         String    @map("user_id")
+  paymentKey     String    @unique @map("payment_key")
+  orderId        String    @unique @map("order_id")
+  orderName      String?   @map("order_name")
+  amount         Int
+  currency       String?   @default("KRW")
+  paymentMethod  String?   @map("payment_method")
+  status         String
+  cardType       String?   @map("card_type")
+  ownerType      String?   @map("owner_type")
+  approveNo      String?   @map("approve_no")
+  paymentDate    DateTime? @map("payment_date")
+  billingCycle   String?   @map("billing_cycle")
+  metadata       Json?
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@map("payments")
+}
+
+model GarminConnection {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id")
+  garminUserId   String    @unique @map("garmin_user_id")
+  accessToken    String    @map("access_token")
+  refreshToken   String?   @map("refresh_token")
+  tokenExpiresAt DateTime? @map("token_expires_at")
+  scopes         String[]
+  needsReauth    Boolean   @default(false) @map("needs_reauth")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("garmin_connections")
+}
+
+model GarminActivity {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id")
+  garminActivityId String    @unique @map("garmin_activity_id")
+  activityName     String?   @map("activity_name")
+  activityType     String    @map("activity_type")
+  startTime        DateTime  @map("start_time")
+  endTime          DateTime? @map("end_time")
+  durationSeconds  Int?      @map("duration_seconds")
+  distanceMeters   Float?    @map("distance_meters")
+  calories         Int?
+  avgHeartRate     Int?      @map("avg_heart_rate")
+  maxHeartRate     Int?      @map("max_heart_rate")
+  minHeartRate     Int?      @map("min_heart_rate")
+  steps            Int?
+  floorsClimbed    Int?      @map("floors_climbed")
+  intensityMinutes Int?      @map("intensity_minutes")
+  stressLevel      Int?      @map("stress_level")
+  isManual         Boolean   @default(false) @map("is_manual")
+  isAutoDetected   Boolean   @default(false) @map("is_auto_detected")
+  fileUrl          String?   @map("file_url")
+  rawData          Json?     @map("raw_data")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("garmin_activities")
+}
+
+model WebhookLog {
+  id           String    @id @default(uuid()) @db.Uuid
+  type         String
+  garminUserId String?   @map("garmin_user_id")
+  summaryId    String?   @map("summary_id")
+  fileType     String?   @map("file_type")
+  callbackUrl  String?   @map("callback_url")
+  payload      Json?
+  status       String?   @default("pending")
+  errorMessage String?   @map("error_message")
+  retryCount   Int       @default(0) @map("retry_count")
+  processedAt  DateTime? @map("processed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@map("webhook_logs")
+}
+

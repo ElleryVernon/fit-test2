@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { translations } from '@/utils/translations';
-import { getTextByLanguage } from '@/utils/languageUtils';
-import NewsletterForm from '../newsletter/NewsletterForm';
-import { FaInstagram } from 'react-icons/fa';
-import { FaRegEnvelope } from 'react-icons/fa';
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useLanguage } from "@/hooks";
+import { translations } from "@/utils/translations";
+import { getTextByLanguage } from "@/utils/languageUtils";
+import NewsletterForm from "@/components/features/newsletter/NewsletterForm";
+import { FaInstagram } from "react-icons/fa";
+import { FaRegEnvelope } from "react-icons/fa";
 
 const Footer = () => {
   const { language } = useLanguage();
@@ -18,12 +18,12 @@ const Footer = () => {
         {/* 뉴스레터 구독 섹션 */}
         <div className="mb-12 text-center md:text-left">
           <h3 className="text-xl font-semibold mb-2">
-            {language === 'ko' ? '소식 받기' : 'Stay updated'}
+            {language === "ko" ? "소식 받기" : "Stay updated"}
           </h3>
           <p className="text-gray-400 mb-4">
-            {language === 'ko'
-              ? '최신 뉴스, 특별 프로모션, 제품 업데이트 및 피트니스 산업 인사이트를 받아보세요.'
-              : 'Sign up for the latest news, exclusive offers, product updates, and fitness industry insights delivered to your inbox.'}
+            {language === "ko"
+              ? "최신 뉴스, 특별 프로모션, 제품 업데이트 및 피트니스 산업 인사이트를 받아보세요."
+              : "Sign up for the latest news, exclusive offers, product updates, and fitness industry insights delivered to your inbox."}
           </p>
           <NewsletterForm origin="footer" />
         </div>
@@ -31,12 +31,12 @@ const Footer = () => {
         {/* 앱 다운로드 섹션 */}
         <div className="mb-12 text-center md:text-left">
           <h3 className="text-xl font-semibold mb-2">
-            {language === 'ko' ? '앱 다운로드' : 'Download the App'}
+            {language === "ko" ? "앱 다운로드" : "Download the App"}
           </h3>
           <p className="text-gray-400 mb-4">
-            {language === 'ko'
-              ? '언제 어디서나 Fitculator를 이용하세요. 앱을 다운로드하고 더 나은 피트니스 경험을 시작하세요.'
-              : 'Use Fitculator anywhere, anytime. Download our app and start a better fitness experience.'}
+            {language === "ko"
+              ? "언제 어디서나 Fitculator를 이용하세요. 앱을 다운로드하고 더 나은 피트니스 경험을 시작하세요."
+              : "Use Fitculator anywhere, anytime. Download our app and start a better fitness experience."}
           </p>
           <div className="flex flex-wrap gap-4 justify-center md:justify-start">
             <a
@@ -265,7 +265,7 @@ const Footer = () => {
               {getTextByLanguage(
                 translations.footer.copyright,
                 language
-              ).replace('2025', new Date().getFullYear().toString())}
+              ).replace("2025", new Date().getFullYear().toString())}
             </span>
           </div>
           <div className="flex flex-col space-y-4">

@@ -6,13 +6,23 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "setup:production": "./scripts/setup-production.sh",
+    "docker:build": "docker build -t fitculator-landing .",
+    "docker:run": "docker run -p 3000:3000 fitculator-landing",
+    "docker:compose": "docker-compose up -d"
   },
   "dependencies": {
     "@next/third-parties": "^15.3.3",
-    "@supabase/supabase-js": "^2.50.5",
+    "@prisma/client": "^6.17.1",
     "@tosspayments/payment-sdk": "^1.9.1",
     "@types/js-cookie": "^3.0.6",
+    "better-auth": "^1.3.27",
     "framer-motion": "^12.9.2",
     "js-cookie": "^3.0.5",
     "next": "^15.3.3",
@@ -26,8 +36,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "critters": "^0.0.25",
+    "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
+    "prisma": "^6.17.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

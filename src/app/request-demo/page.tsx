@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import DemoRequestForm from '@/components/demo/DemoRequestForm';
-import { useLanguage } from '@/contexts/LanguageContext';
+import React from "react";
+import Link from "next/link";
+import DemoRequestForm from "@/components/features/demo/DemoRequestForm";
+import { useLanguage } from "@/hooks";
 
 export default function RequestDemoPage() {
   const { language } = useLanguage();
@@ -34,18 +34,18 @@ export default function RequestDemoPage() {
             >
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
-            {language === 'ko' ? '홈으로 돌아가기' : 'Back to Home'}
+            {language === "ko" ? "홈으로 돌아가기" : "Back to Home"}
           </Link>
 
           {/* 페이지 제목 */}
           <h1 className="text-3xl md:text-4xl font-bold mb-4 text-center">
-            {language === 'ko' ? '데모 요청하기' : 'Request a Demo'}
+            {language === "ko" ? "데모 요청하기" : "Request a Demo"}
           </h1>
 
           {/* 페이지 설명 */}
           <p className="text-lg text-gray-300 mb-12 text-center max-w-2xl mx-auto">
-            {language === 'ko'
-              ? 'Fitculator가 어떻게 여러분의 비즈니스를 성장시킬 수 있는지 알아보세요. 아래 양식을 작성하시면 곧 연락드리겠습니다.'
+            {language === "ko"
+              ? "Fitculator가 어떻게 여러분의 비즈니스를 성장시킬 수 있는지 알아보세요. 아래 양식을 작성하시면 곧 연락드리겠습니다."
               : "Discover how Fitculator can help grow your business. Fill out the form below and we'll get in touch with you soon."}
           </p>
 

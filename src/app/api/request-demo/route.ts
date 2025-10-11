@@ -1,10 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db/client";
 
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL!;
 
@@ -26,8 +21,8 @@ async function sendSlackNotification({
   };
 
   await fetch(slackWebhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(slackMessage),
   });
 }
@@ -39,16 +34,20 @@ export async function POST(request: Request) {
 
     if (!company_name || !your_name || !email || !message || !origin) {
       return NextResponse.json(
-        { error: 'All fields including origin are required' },
+        { error: "All fields including origin are required" },
         { status: 400 }
       );
     }
 
-    const { error } = await supabase
-      .from('demo_requests')
-      .insert([{ company_name, your_name, email, message, origin }]);
-
-    if (error) throw error;
+    await prisma.demoRequest.create({
+      data: {
+        companyName: company_name,
+        yourName: your_name,
+        email,
+        message,
+        origin,
+      },
+    });
 
     await sendSlackNotification({
       company_name,
@@ -59,12 +58,12 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      { message: 'Request submitted successfully' },
+      { message: "Request submitted successfully" },
       { status: 200 }
     );
   } catch (error: unknown) {
     const errorMessage =
-      error instanceof Error ? error.message : 'Server error';
+      error instanceof Error ? error.message : "Server error";
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
