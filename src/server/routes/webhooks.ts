@@ -55,12 +55,14 @@ const createWebhookHandler = (webhookType: string) => {
       console.log(`⚡ [${webhookType}] Starting async processing...`);
       garminWebhookService.processWebhook(webhook.id).catch((error) => {
         console.error(
-          `❌ [${webhookType}] Failed to process webhook:`,
+          `❌ [${webhookType}] Failed to process webhook ${webhook.id}:`,
           error instanceof Error ? error.message : error
         );
         if (error instanceof Error && error.stack) {
           console.error(`💥 [${webhookType}] Stack trace:`, error.stack);
         }
+        // 에러 전체 출력
+        console.error(`💥 [${webhookType}] Full error:`, JSON.stringify(error, null, 2));
       });
 
       // 4. Garmin에 성공 응답
@@ -187,16 +189,49 @@ export const webhookRoutes = new Elysia({ prefix: "/webhook/garmin" })
         { pending: 0, processing: 0, success: 0, failed: 0, types: {} }
       );
 
-      // 최근 로그 10개
+      // 최근 로그 10개 (에러 메시지 포함)
       const recent = await prisma.webhookLog.findMany({
         orderBy: { createdAt: "desc" },
         take: 10,
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          errorMessage: true,
+          garminUserId: true,
+          retryCount: true,
+          createdAt: true,
+          processedAt: true,
+        },
+      });
+
+      // 실패한 로그만 (디버깅용)
+      const failed = await prisma.webhookLog.findMany({
+        where: {
+          OR: [
+            { status: "failed" },
+            { errorMessage: { not: null } },
+          ],
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          errorMessage: true,
+          garminUserId: true,
+          retryCount: true,
+          createdAt: true,
+          payload: true,
+        },
       });
 
       return {
         status: "healthy",
         last_24h: summary,
         recent_logs: recent,
+        failed_logs: failed,
       };
     } catch (error) {
       console.error("Status endpoint error:", error);

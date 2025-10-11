@@ -186,7 +186,7 @@ export class GarminWebhookService {
                 activityId: number;
                 [key: string]: unknown;
               };
-              
+
               console.log(
                 `[Webhook] Processing activity ${activity.activityId} for user ${activity.userId}`
               );
