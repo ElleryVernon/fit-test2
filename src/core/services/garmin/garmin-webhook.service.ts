@@ -150,33 +150,27 @@ export class GarminWebhookService {
    * Webhook 처리
    */
   async processWebhook(webhookId: string) {
-    console.log(`[processWebhook] 🚀 Starting to process webhook ${webhookId}`);
-
     const webhook = await prisma.webhookLog.findUnique({
       where: { id: webhookId },
     });
 
     if (!webhook) {
-      console.error(`[processWebhook] ❌ Webhook not found: ${webhookId}`);
+      console.error("Webhook not found:", webhookId);
       return;
     }
 
-    console.log(`[processWebhook] Webhook found: type=${webhook.type}, status=${webhook.status}`);
-
     if (webhook.status !== "pending") {
-      console.log(`[processWebhook] Webhook already processed: ${webhookId} (status: ${webhook.status})`);
+      console.log("Webhook already processed:", webhookId);
       return;
     }
 
     try {
-      console.log(`[processWebhook] Updating status to 'processing'...`);
       await prisma.webhookLog.update({
         where: { id: webhookId },
         data: { status: "processing" },
       });
 
       const payload = webhook.payload as GarminWebhookPayload;
-      console.log(`[processWebhook] Processing webhook type: ${webhook.type}`);
 
       switch (webhook.type) {
         case WEBHOOK_TYPES.ACTIVITIES:
@@ -186,15 +180,17 @@ export class GarminWebhookService {
               `[Webhook] Processing ${payload.activities.length} activities`
             );
 
-            for (const activity of payload.activities) {
+            for (const activityData of payload.activities) {
+              const activity = activityData as Record<string, unknown>;
+              
               console.log(
                 `[Webhook] Processing activity ${activity.activityId} for user ${activity.userId}`
               );
 
               try {
                 const saved = await this.saveActivity(
-                  activity.userId,
-                  activity as Record<string, unknown>,
+                  activity.userId as string,
+                  activity,
                   false,
                   false
                 );
