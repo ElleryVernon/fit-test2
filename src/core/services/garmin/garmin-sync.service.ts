@@ -173,13 +173,50 @@ export class GarminSyncService {
         `[GarminSync] Fetching activities for user ${userId} (${startDate.toISOString()} ~ ${endDate.toISOString()})`
       );
 
-      // 가민 파트너 API 호출: 활동 목록
-      const response = await this.garminFetchWithRetry(
-        `/activities?uploadStartTimeInSeconds=${uploadStartTime}&uploadEndTimeInSeconds=${uploadEndTime}`,
-        accessToken
-      );
+      // 가민 파트너 API: Backfill 요청
+      // POST /backfill/activities 또는 GET /activities 사용
+      // 먼저 간단한 GET 방식 시도
+      let response: Response;
+      let data: GarminActivity[] | { activities: GarminActivity[] };
+      
+      try {
+        // 방법 1: GET /activities (일반 API 스타일)
+        response = await this.garminFetchWithRetry(
+          `/activities?uploadStartTimeInSeconds=${uploadStartTime}&uploadEndTimeInSeconds=${uploadEndTime}`,
+          accessToken
+        );
+        data = await response.json();
+        console.log("[GarminSync] Used GET /activities endpoint");
+      } catch (error) {
+        // 방법 2: POST /backfill/activities (Backfill API)
+        console.log("[GarminSync] GET failed, trying POST /backfill/activities");
+        const backfillResponse = await fetch(
+          `${garminConfig.api.baseUrl}/backfill/activities`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              uploadStartTimeInSeconds: uploadStartTime,
+              uploadEndTimeInSeconds: uploadEndTime,
+            }),
+          }
+        );
+        
+        if (!backfillResponse.ok) {
+          throw new Error(`Backfill API error: ${backfillResponse.status}`);
+        }
+        
+        data = await backfillResponse.json();
+        console.log("[GarminSync] Used POST /backfill/activities endpoint");
+      }
 
-      const activities: GarminActivity[] = await response.json();
+      // 응답 형식 처리
+      const activities: GarminActivity[] = Array.isArray(data)
+        ? data
+        : (data as { activities: GarminActivity[] }).activities || [];
 
       if (!Array.isArray(activities) || activities.length === 0) {
         console.log(`[GarminSync] No new activities found for user ${userId}`);
