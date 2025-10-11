@@ -29,6 +29,16 @@ type GarminWebhookPayload = {
     activitySubType?: string;
     offsetInSeconds: number;
   }>;
+  manualActivities?: Array<Record<string, unknown>>;
+  userPermissionsChange?: Array<{
+    userId: string;
+    summaryId: string;
+    permissions: string[];
+    changeTimeInSeconds: number;
+  }>;
+  deregistrations?: Array<{
+    userId: string;
+  }>;
   dailies?: Array<Record<string, unknown>>;
   epochs?: Array<Record<string, unknown>>;
   sleeps?: Array<Record<string, unknown>>;
@@ -259,15 +269,40 @@ export class GarminWebhookService {
           break;
 
         case WEBHOOK_TYPES.MANUAL_ACTIVITIES:
-          // Manual Activities Push Webhook
-          if (Array.isArray(payload.activities)) {
-            for (const activity of payload.activities) {
-              await this.saveActivity(
-                payload.userId,
-                activity as Record<string, unknown>,
-                true,
-                false
+          // Manual Activities Push Webhook (GC_ACTIVITY_UPDATE)
+          if (Array.isArray(payload.manualActivities)) {
+            console.log(
+              `[Webhook] Processing ${payload.manualActivities.length} manual activities`
+            );
+
+            for (const activityData of payload.manualActivities) {
+              const activity = activityData as {
+                userId: string;
+                activityId: number;
+                [key: string]: unknown;
+              };
+
+              console.log(
+                `[Webhook] Processing manual activity ${activity.activityId} for user ${activity.userId}`
               );
+
+              try {
+                const saved = await this.saveActivity(
+                  activity.userId,
+                  activity as Record<string, unknown>,
+                  true, // isManual = true
+                  false
+                );
+                console.log(
+                  `[Webhook] ✅ Manual activity saved: ${saved.garminActivityId}`
+                );
+              } catch (error) {
+                console.error(
+                  `[Webhook] ❌ Failed to save manual activity:`,
+                  error
+                );
+                throw error;
+              }
             }
           }
           break;
@@ -326,16 +361,71 @@ export class GarminWebhookService {
           break;
 
         case WEBHOOK_TYPES.DEREGISTRATIONS:
-          await prisma.garminConnection.deleteMany({
-            where: { garminUserId: payload.userId },
-          });
+          // User Deregistration Webhook (USER_DEREG)
+          if (Array.isArray(payload.deregistrations)) {
+            console.log(
+              `[Webhook] Processing ${payload.deregistrations.length} deregistrations`
+            );
+
+            for (const dereg of payload.deregistrations) {
+              console.log(
+                `[Webhook] Deregistering user ${dereg.userId}`
+              );
+
+              try {
+                // 연결 삭제
+                const deleted = await prisma.garminConnection.deleteMany({
+                  where: { garminUserId: dereg.userId },
+                });
+
+                console.log(
+                  `[Webhook] ✅ User deregistered: ${dereg.userId} (${deleted.count} connections deleted)`
+                );
+              } catch (error) {
+                console.error(
+                  `[Webhook] ❌ Failed to deregister user:`,
+                  error
+                );
+                throw error;
+              }
+            }
+          }
           break;
 
         case WEBHOOK_TYPES.PERMISSIONS:
-          await prisma.garminConnection.updateMany({
-            where: { garminUserId: payload.userId },
-            data: { needsReauth: true },
-          });
+          // User Permissions Change Webhook (CONSUMER_PERMISSIONS)
+          if (Array.isArray(payload.userPermissionsChange)) {
+            console.log(
+              `[Webhook] Processing ${payload.userPermissionsChange.length} permission changes`
+            );
+
+            for (const permChange of payload.userPermissionsChange) {
+              console.log(
+                `[Webhook] Permission change for user ${permChange.userId}: ${permChange.permissions.join(", ")}`
+              );
+
+              try {
+                // 권한 업데이트
+                await prisma.garminConnection.updateMany({
+                  where: { garminUserId: permChange.userId },
+                  data: {
+                    scopes: permChange.permissions,
+                    updatedAt: new Date(),
+                  },
+                });
+
+                console.log(
+                  `[Webhook] ✅ Permissions updated for ${permChange.userId}`
+                );
+              } catch (error) {
+                console.error(
+                  `[Webhook] ❌ Failed to update permissions:`,
+                  error
+                );
+                throw error;
+              }
+            }
+          }
           break;
       }
 
@@ -384,6 +474,9 @@ export class GarminWebhookService {
       payload.activities ||
       payload.activityDetails || // Activity Details Webhook
       payload.moveIQActivities || // MoveIQ Webhook
+      payload.manualActivities || // Manual Activities Webhook
+      payload.userPermissionsChange || // User Permissions Webhook
+      payload.deregistrations || // Deregistration Webhook
       payload.dailies || // Daily Summaries Webhook
       payload.epochs || // Epoch Summaries Webhook
       payload.sleeps || // Sleep Summaries Webhook

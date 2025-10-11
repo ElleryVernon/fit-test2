@@ -1,4 +1,6 @@
 import { Elysia, t } from "elysia";
+// authRoutes는 현재 Apple OAuth만 처리
+// Garmin OAuth는 /api/garmin/oauth/*로 이동됨 (라우트 충돌 방지)
 
 /**
  * Auth API 라우트 (OAuth 관련)
