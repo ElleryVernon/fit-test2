@@ -1,101 +1,104 @@
 # 🔐 Google OAuth 설정 가이드
 
-## 🚨 현재 오류: `redirect_uri_mismatch`
-
+## 현재 오류 상황
 ```
 400 오류: redirect_uri_mismatch
 액세스 차단됨: Syntaxy의 요청이 잘못되었습니다
 ```
 
-## 🔧 해결 방법
+## 🎯 해결 방법
 
-### 1. Google Cloud Console 접속
-1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) 접속
-2. 프로젝트 선택 (현재 클라이언트 ID: `86531919140-bdrn9qhonccvv9nefa088v86nlejtveu`)
+### 1. Google Cloud Console 설정
 
-### 2. OAuth 2.0 클라이언트 ID 편집
-1. 좌측 메뉴에서 **"사용자 인증 정보"** 클릭
-2. OAuth 2.0 클라이언트 ID 클릭하여 편집
-3. **"승인된 리디렉션 URI"** 섹션 확인
-
-### 3. 리디렉션 URI 추가
-다음 URI들을 **정확히** 추가하세요:
-
-```
-# 개발 환경
-http://localhost:3000/api/auth/callback/google
-
-# 프로덕션 환경
-https://fit-test2.vercel.app/api/auth/callback/google
-```
-
-### 4. 현재 설정 확인
-**승인된 리디렉션 URI**에 다음이 포함되어 있는지 확인:
-- [ ] `http://localhost:3000/api/auth/callback/google`
-- [ ] `https://fit-test2.vercel.app/api/auth/callback/google`
-
-### 5. 저장 및 적용
-1. **"저장"** 버튼 클릭
-2. 변경사항 적용까지 **5-10분** 소요
-
-## 🔍 문제 진단
-
-### 현재 클라이언트 ID
-```
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=86531919140-bdrn9qhonccvv9nefa088v86nlejtveu.apps.googleusercontent.com
-```
-
-### 예상되는 콜백 URL
+#### A. 승인된 리디렉션 URI 추가
 ```
 https://fit-test2.vercel.app/api/auth/callback/google
 ```
 
-### Better Auth 기본 콜백 경로
-Better Auth는 기본적으로 `/api/auth/callback/{provider}` 경로를 사용합니다.
-
-## 📋 체크리스트
-
-- [ ] Google Cloud Console 접속
-- [ ] OAuth 2.0 클라이언트 ID 편집
-- [ ] 개발용 리디렉션 URI 추가: `http://localhost:3000/api/auth/callback/google`
-- [ ] 프로덕션용 리디렉션 URI 추가: `https://fit-test2.vercel.app/api/auth/callback/google`
-- [ ] 저장 완료
-- [ ] 5-10분 대기 후 테스트
-
-## 🧪 테스트 방법
-
-### 1. 개발 환경 테스트
-```bash
-# 로컬 서버 실행
-bun run dev
-
-# 브라우저에서 테스트
-http://localhost:3000
+#### B. 승인된 JavaScript 원본 추가
 ```
-
-### 2. 프로덕션 환경 테스트
-```bash
-# Vercel 배포 확인
 https://fit-test2.vercel.app
 ```
 
-## 🚨 주의사항
+### 2. Google Cloud Console 접속 방법
 
-1. **정확한 URL**: 프로토콜, 도메인, 경로가 정확히 일치해야 함
-2. **대소문자 구분**: URL은 대소문자를 구분함
-3. **슬래시 주의**: 마지막 슬래시 유무도 중요함
-4. **적용 시간**: 변경사항 적용까지 5-10분 소요
+1. [Google Cloud Console](https://console.cloud.google.com/) 접속
+2. **API 및 서비스** → **사용자 인증 정보** 이동
+3. OAuth 2.0 클라이언트 ID 선택 (현재 사용 중인 것)
+4. **승인된 리디렉션 URI** 섹션에서 추가:
+   ```
+   https://fit-test2.vercel.app/api/auth/callback/google
+   ```
+5. **승인된 JavaScript 원본** 섹션에서 추가:
+   ```
+   https://fit-test2.vercel.app
+   ```
 
-## 🔗 유용한 링크
+### 3. Better Auth 콜백 경로 확인
 
-- [Google OAuth 2.0 문서](https://developers.google.com/identity/protocols/oauth2/web-server#redirect-uri-mismatch)
-- [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-- [Better Auth 문서](https://www.better-auth.com/docs/social-login/google)
+Better Auth는 다음 경로를 사용합니다:
+- **Google OAuth 콜백**: `/api/auth/callback/google`
+- **Apple OAuth 콜백**: `/api/auth/callback/apple`
+- **일반 인증**: `/api/auth/[...all]`
 
-## 📞 추가 도움
+### 4. 현재 설정된 환경변수
 
-문제가 계속 발생하면:
-1. Google Cloud Console에서 리디렉션 URI 설정 재확인
-2. 브라우저 캐시 클리어
-3. 개발자 도구에서 네트워크 탭 확인
-4. Vercel 로그 확인: `vercel logs`
+```bash
+# 개발 환경
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=86531919140-bdrn9qhonccvv9nefa088v86nlejtveu.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
+
+# 프로덕션 환경 (Vercel)
+NEXT_PUBLIC_BASE_URL=https://fit-test2.vercel.app
+```
+
+### 5. 설정 후 확인사항
+
+- [ ] Google Cloud Console에서 리디렉션 URI 추가 완료
+- [ ] JavaScript 원본 추가 완료
+- [ ] Vercel 환경변수 설정 확인
+- [ ] 프로덕션 배포 완료
+- [ ] Google 로그인 테스트
+
+### 6. 추가 도메인 (필요시)
+
+다른 도메인을 사용하는 경우:
+```
+# 커스텀 도메인
+https://fitculator.com/api/auth/callback/google
+https://www.fitculator.com/api/auth/callback/google
+
+# 개발 환경
+http://localhost:3000/api/auth/callback/google
+```
+
+### 7. 문제 해결
+
+#### 여전히 오류가 발생하는 경우:
+
+1. **캐시 클리어**
+   - 브라우저 캐시 삭제
+   - 시크릿 모드에서 테스트
+
+2. **환경변수 재확인**
+   ```bash
+   # Vercel에서 확인
+   vercel env ls
+   ```
+
+3. **로그 확인**
+   ```bash
+   # Vercel 로그 확인
+   vercel logs
+   ```
+
+4. **Google OAuth 동의 화면 설정**
+   - OAuth 동의 화면에서 앱 정보 완성
+   - 테스트 사용자 추가 (필요시)
+
+## 🔗 참고 링크
+
+- [Google Cloud Console](https://console.cloud.google.com/)
+- [Google OAuth 2.0 문서](https://developers.google.com/identity/protocols/oauth2)
+- [Better Auth 문서](https://www.better-auth.com/)
+- [Vercel 환경변수 설정](https://vercel.com/docs/projects/environment-variables)
