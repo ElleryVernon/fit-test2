@@ -163,13 +163,12 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           return { error: "user_id is required" };
         }
 
-        // 연결 정보와 최근 활동 수를 병렬로 조회 (성능 개선)
+        // 연결 정보와 최근 활동 수를 병렬로 조회
         const [connection, activityCount, latestActivity] = await Promise.all([
           prisma.garminConnection.findFirst({
             where: { userId: user_id },
             select: {
               garminUserId: true,
-              accessToken: true,
               needsReauth: true,
               scopes: true,
               createdAt: true,
@@ -178,17 +177,12 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
             },
           }),
           prisma.garminActivity.count({
-            where: {
-              userId: user_id,
-              createdAt: {
-                gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-              },
-            },
+            where: { userId: user_id },
           }),
           prisma.garminActivity.findFirst({
             where: { userId: user_id },
             orderBy: { createdAt: "desc" },
-            select: { createdAt: true },
+            select: { createdAt: true, startTime: true },
           }),
         ]);
 
@@ -204,20 +198,7 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           ? new Date(connection.tokenExpiresAt) < new Date()
           : false;
 
-        // 데이터 신선도 체크 (10분)
-        const dataAge = latestActivity
-          ? Date.now() - latestActivity.createdAt.getTime()
-          : Infinity;
-        const isStale = dataAge > 10 * 60 * 1000; // 10분
-
-        // 데이터가 오래되었으면 Backfill 요청 안내
-        if (isStale && !tokenExpired && !connection.needsReauth) {
-          console.log(
-            `[API] Data is stale for user ${user_id}. Consider requesting backfill.`
-          );
-        }
-
-        // 캐싱 헤더 추가
+        // 캐싱 헤더
         set.headers["Cache-Control"] =
           "public, s-maxage=30, stale-while-revalidate=60";
 
@@ -228,12 +209,13 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           scopes: connection.scopes,
           connected_at: connection.createdAt,
           last_updated: connection.updatedAt,
-          recent_activities: activityCount,
-          data_freshness: {
-            is_stale: isStale,
-            last_sync: latestActivity?.createdAt,
-            age_minutes: latestActivity ? Math.floor(dataAge / 60000) : null,
-          },
+          total_activities: activityCount,
+          latest_activity: latestActivity
+            ? {
+                received_at: latestActivity.createdAt,
+                activity_date: latestActivity.startTime,
+              }
+            : null,
         };
       } catch (error) {
         console.error("Connection status error:", error);
@@ -269,11 +251,7 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         const limitNum = parseInt(limit);
         const offsetNum = parseInt(offset);
 
-        // Garmin Health API는 Webhook 전용!
-        // 직접 Pull 방식으로 데이터를 가져올 수 없음
-        // Webhook으로 들어온 데이터만 DB에서 조회
-
-        // 쿼리 조건 빌드
+        // 쿼리 조건 빌드 (DB에서만 조회)
         const whereConditions: Record<string, unknown> = {
           userId: user_id,
         };
@@ -666,10 +644,8 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         const days = parseInt(period);
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - days);
-        // Garmin Health API는 Webhook 전용
-        // DB에 저장된 데이터만 조회
 
-        // 기간 내 활동 조회 (필요한 필드만 선택하여 성능 개선)
+        // 기간 내 활동 조회
         const activities = await prisma.garminActivity.findMany({
           where: {
             userId: user_id,

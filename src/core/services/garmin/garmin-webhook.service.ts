@@ -3,7 +3,6 @@
  */
 
 import { prisma } from "@/lib/db/client";
-import { garminApiService } from "./garmin-api.service";
 import { WEBHOOK_TYPES } from "@/constants";
 
 type GarminWebhookPayload = {
@@ -154,33 +153,34 @@ export class GarminWebhookService {
                 );
               }
             }
-          } else if (payload.summaryId) {
-            // Ping 방식 (Callback URL)
-            const activityData = await garminApiService.fetchActivityDetails(
-              payload.summaryId,
-              payload.userAccessToken
-            );
-            await this.saveActivity(payload.userId, activityData);
           }
           break;
 
         case WEBHOOK_TYPES.MANUAL_ACTIVITIES:
-          if (payload.summaryId) {
-            const activityData = await garminApiService.fetchActivityDetails(
-              payload.summaryId,
-              payload.userAccessToken
-            );
-            await this.saveActivity(payload.userId, activityData, true, false);
+          // Manual Activities Push Webhook
+          if (Array.isArray(payload.activities)) {
+            for (const activity of payload.activities) {
+              await this.saveActivity(
+                payload.userId,
+                activity as Record<string, unknown>,
+                true,
+                false
+              );
+            }
           }
           break;
 
         case WEBHOOK_TYPES.MOVEIQ:
-          if (payload.summaryId) {
-            const activityData = await garminApiService.fetchActivityDetails(
-              payload.summaryId,
-              payload.userAccessToken
-            );
-            await this.saveActivity(payload.userId, activityData, false, true);
+          // MoveIQ Push Webhook
+          if (Array.isArray(payload.activities)) {
+            for (const activity of payload.activities) {
+              await this.saveActivity(
+                payload.userId,
+                activity as Record<string, unknown>,
+                false,
+                true
+              );
+            }
           }
           break;
 
