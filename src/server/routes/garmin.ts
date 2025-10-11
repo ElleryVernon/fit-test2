@@ -273,13 +273,13 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
 
         // 스마트 동기화: 데이터가 오래되었으면 가민 API에서 가져오기 (블로킹)
         let syncStatus: { synced?: number; status: string } | null = null;
-        
+
         if (shouldForceSync || offsetNum === 0) {
           // 첫 페이지 로드 시에만 동기화 체크
           const validation = await garminSyncService.validateConnection(
             user_id
           );
-          
+
           if (!validation.valid || !validation.connection) {
             set.status = 401;
             return {
@@ -290,7 +290,7 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           }
 
           const isStale = await garminSyncService.isDataStale(user_id);
-          
+
           if (isStale || shouldForceSync) {
             console.log(
               `[API] Data is stale, syncing from Garmin API for user ${user_id}`
@@ -690,7 +690,7 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
 
         // 스마트 동기화: 통계 조회 전에 최신 데이터 확인
         const validation = await garminSyncService.validateConnection(user_id);
-        
+
         if (!validation.valid || !validation.connection) {
           set.status = 401;
           return {
@@ -700,18 +700,18 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         }
 
         const isStale = await garminSyncService.isDataStale(user_id);
-        
+
         if (isStale || shouldForceSync) {
-          console.log(
-            `[API] Syncing activities for stats (user: ${user_id})`
-          );
+          console.log(`[API] Syncing activities for stats (user: ${user_id})`);
 
           // 블로킹 동기화
           const syncResult = await garminSyncService.syncActivities(
             user_id,
             validation.connection.accessToken,
             {
-              startDate: new Date(startDate.getTime() - days * 24 * 60 * 60 * 1000),
+              startDate: new Date(
+                startDate.getTime() - days * 24 * 60 * 60 * 1000
+              ),
             }
           );
 

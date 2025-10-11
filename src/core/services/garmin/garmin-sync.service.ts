@@ -24,6 +24,34 @@ const syncStatus = new Map<
   { inProgress: boolean; lastAttempt: number }
 >();
 
+// Garmin Daily Summary 타입 (Health API 문서 Section 7.1 참조)
+interface GarminDailySummary {
+  summaryId: string;
+  calendarDate: string;
+  startTimeInSeconds: number;
+  startTimeOffsetInSeconds: number;
+  activityType: string;
+  durationInSeconds: number;
+  activeTimeInSeconds: number;
+  steps: number;
+  distanceInMeters: number;
+  activeKilocalories: number;
+  bmrKilocalories?: number;
+  moderateIntensityDurationInSeconds?: number;
+  vigorousIntensityDurationInSeconds?: number;
+  floorsClimbed?: number;
+  minHeartRateInBeatsPerMinute?: number;
+  averageHeartRateInBeatsPerMinute?: number;
+  maxHeartRateInBeatsPerMinute?: number;
+  restingHeartRateInBeatsPerMinute?: number;
+  timeOffsetHeartRateSamples?: Record<string, number>;
+  averageStressLevel?: number;
+  maxStressLevel?: number;
+  stressDurationInSeconds?: number;
+  restStressDurationInSeconds?: number;
+  [key: string]: unknown;
+}
+
 interface GarminActivity {
   summaryId: string;
   activityName?: string;
@@ -40,7 +68,7 @@ interface GarminActivity {
   vigorousIntensityDurationInSeconds?: number;
   floorsClimbed?: number;
   isManual?: boolean;
-  beginTimestamp?: number;
+  calendarDate?: string;
   [key: string]: unknown;
 }
 
@@ -173,52 +201,46 @@ export class GarminSyncService {
         `[GarminSync] Fetching activities for user ${userId} (${startDate.toISOString()} ~ ${endDate.toISOString()})`
       );
 
-      // 가민 파트너 API: Backfill 요청
-      // POST /backfill/activities 또는 GET /activities 사용
-      // 먼저 간단한 GET 방식 시도
-      let response: Response;
-      let data: GarminActivity[] | { activities: GarminActivity[] };
+      // 가민 API 전략:
+      // 1. Dailies (일간 요약) - 빠르고 안정적
+      // 2. Epochs (15분 단위) - 상세하지만 느림
+      // 3. Activities - Activity API (별도 권한 필요)
+      
+      console.log("[GarminSync] Fetching from Garmin Dailies API (recommended for activities)");
+      
+      // Garmin Health API: Dailies Summary 사용 (활동 데이터 포함)
+      // 문서 참조: Section 7.1 Daily Summaries
+      const response = await this.garminFetchWithRetry(
+        `/dailies?uploadStartTimeInSeconds=${uploadStartTime}&uploadEndTimeInSeconds=${uploadEndTime}`,
+        accessToken
+      );
 
-      try {
-        // 방법 1: GET /activities (일반 API 스타일)
-        response = await this.garminFetchWithRetry(
-          `/activities?uploadStartTimeInSeconds=${uploadStartTime}&uploadEndTimeInSeconds=${uploadEndTime}`,
-          accessToken
-        );
-        data = await response.json();
-        console.log("[GarminSync] Used GET /activities endpoint");
-      } catch (error) {
-        // 방법 2: POST /backfill/activities (Backfill API)
-        console.log(
-          "[GarminSync] GET failed, trying POST /backfill/activities"
-        );
-        const backfillResponse = await fetch(
-          `${garminConfig.api.baseUrl}/backfill/activities`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              uploadStartTimeInSeconds: uploadStartTime,
-              uploadEndTimeInSeconds: uploadEndTime,
-            }),
-          }
-        );
+      const dailies = await response.json();
+      console.log(`[GarminSync] Received ${Array.isArray(dailies) ? dailies.length : 0} daily summaries`);
 
-        if (!backfillResponse.ok) {
-          throw new Error(`Backfill API error: ${backfillResponse.status}`);
-        }
-
-        data = await backfillResponse.json();
-        console.log("[GarminSync] Used POST /backfill/activities endpoint");
-      }
-
-      // 응답 형식 처리
-      const activities: GarminActivity[] = Array.isArray(data)
-        ? data
-        : (data as { activities: GarminActivity[] }).activities || [];
+      // Daily summaries를 Activity 형식으로 변환
+      const activities: GarminActivity[] = Array.isArray(dailies)
+        ? dailies
+            .filter((daily) => daily.steps > 0 || daily.activeKilocalories > 0) // 활동이 있는 날만
+            .map((daily) => ({
+              summaryId: daily.summaryId,
+              activityName: `Daily Activity - ${daily.calendarDate}`,
+              activityType: daily.activityType || "WALKING",
+              startTimeInSeconds: daily.startTimeInSeconds,
+              durationInSeconds: daily.activeTimeInSeconds || daily.durationInSeconds,
+              distanceInMeters: daily.distanceInMeters,
+              activeKilocalories: daily.activeKilocalories,
+              averageHeartRateInBeatsPerMinute: daily.averageHeartRateInBeatsPerMinute,
+              maxHeartRateInBeatsPerMinute: daily.maxHeartRateInBeatsPerMinute,
+              minHeartRateInBeatsPerMinute: daily.minHeartRateInBeatsPerMinute,
+              steps: daily.steps,
+              moderateIntensityDurationInSeconds: daily.moderateIntensityDurationInSeconds,
+              vigorousIntensityDurationInSeconds: daily.vigorousIntensityDurationInSeconds,
+              floorsClimbed: daily.floorsClimbed,
+              isManual: false,
+              calendarDate: daily.calendarDate,
+            }))
+        : [];
 
       if (!Array.isArray(activities) || activities.length === 0) {
         console.log(`[GarminSync] No new activities found for user ${userId}`);
