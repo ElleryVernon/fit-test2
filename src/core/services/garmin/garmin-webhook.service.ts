@@ -30,6 +30,18 @@ type GarminWebhookPayload = {
     offsetInSeconds: number;
   }>;
   manualActivities?: Array<Record<string, unknown>>;
+  activityFiles?: Array<{
+    userId: string;
+    summaryId: string;
+    fileType: string;
+    callbackURL: string;
+    startTimeInSeconds: number;
+    activityId: number;
+    activityType: string;
+    activityName: string;
+    manual: boolean;
+    deviceName?: string;
+  }>;
   userPermissionsChange?: Array<{
     userId: string;
     summaryId: string;
@@ -80,18 +92,36 @@ export class GarminWebhookService {
 
     const connection = await prisma.garminConnection.findFirst({
       where: { garminUserId },
-      select: { userId: true },
+      select: { userId: true, garminUserId: true },
     });
 
     if (!connection) {
       console.error(
         `[saveActivity] ❌ Connection not found for garminUserId: ${garminUserId}`
       );
-      throw new Error(`Garmin connection not found for user: ${garminUserId}`);
+
+      // DB에서 모든 연결 확인 (디버깅)
+      const allConnections = await prisma.garminConnection.findMany({
+        select: { userId: true, garminUserId: true },
+      });
+      console.log(
+        `[saveActivity] 📊 Total connections in DB: ${allConnections.length}`
+      );
+      if (allConnections.length > 0) {
+        console.log(
+          `[saveActivity] 📋 Available garminUserIds:`,
+          allConnections.map((c) => c.garminUserId)
+        );
+      }
+
+      // Webhook 테스트용: 연결이 없어도 계속 진행하지 않고 명확한 에러
+      throw new Error(
+        `Garmin connection not found. Please connect your Garmin account first. Looking for garminUserId: ${garminUserId}`
+      );
     }
 
     console.log(
-      `[saveActivity] ✅ Found connection, userId: ${connection.userId}`
+      `[saveActivity] ✅ Found connection, userId: ${connection.userId}, garminUserId: ${connection.garminUserId}`
     );
 
     // Activity ID는 문자열로 변환 (숫자로 올 수 있음)
@@ -357,7 +387,23 @@ export class GarminWebhookService {
           break;
 
         case WEBHOOK_TYPES.ACTIVITY_FILES:
-          console.log("Activity file webhook:", payload);
+          // Activity Files Webhook
+          if (Array.isArray(payload.activityFiles)) {
+            console.log(
+              `[Webhook] Processing ${payload.activityFiles.length} activity files`
+            );
+
+            for (const file of payload.activityFiles) {
+              console.log(
+                `[Webhook] Activity file: ${file.activityName} (${
+                  file.fileType
+                }) - ${file.deviceName || "Unknown device"}`
+              );
+              // 파일 URL을 로그에만 기록 (실제 다운로드는 선택적)
+              console.log(`[Webhook] File URL: ${file.callbackURL}`);
+            }
+            console.log(`[Webhook] ✅ Activity files logged`);
+          }
           break;
 
         case WEBHOOK_TYPES.DEREGISTRATIONS:
@@ -472,6 +518,7 @@ export class GarminWebhookService {
       payload.activityDetails || // Activity Details Webhook
       payload.moveIQActivities || // MoveIQ Webhook
       payload.manualActivities || // Manual Activities Webhook
+      payload.activityFiles || // Activity Files Webhook
       payload.userPermissionsChange || // User Permissions Webhook
       payload.deregistrations || // Deregistration Webhook
       payload.dailies || // Daily Summaries Webhook
