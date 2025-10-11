@@ -13,6 +13,17 @@ type GarminWebhookPayload = {
   fileType?: string;
   callbackURL?: string;
   activities?: unknown[];
+  activityDetails?: Array<{
+    userId: string;
+    summaryId: string;
+    activityId: number;
+    summary: Record<string, unknown>;
+    samples?: Array<Record<string, unknown>>;
+  }>;
+  dailies?: Array<Record<string, unknown>>;
+  epochs?: Array<Record<string, unknown>>;
+  sleeps?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
 };
 
 export class GarminWebhookService {
@@ -126,7 +137,25 @@ export class GarminWebhookService {
       switch (webhook.type) {
         case WEBHOOK_TYPES.ACTIVITIES:
         case WEBHOOK_TYPES.ACTIVITY_DETAILS:
-          if (payload.summaryId) {
+          // Activity Details Push Webhook 처리
+          if (Array.isArray(payload.activityDetails)) {
+            console.log(
+              `[Webhook] Processing ${payload.activityDetails.length} activity details`
+            );
+
+            for (const activityDetail of payload.activityDetails) {
+              const summary = activityDetail.summary;
+              if (summary) {
+                await this.saveActivity(
+                  activityDetail.userId,
+                  summary,
+                  false,
+                  false
+                );
+              }
+            }
+          } else if (payload.summaryId) {
+            // Ping 방식 (Callback URL)
             const activityData = await garminApiService.fetchActivityDetails(
               payload.summaryId,
               payload.userAccessToken
@@ -208,6 +237,7 @@ export class GarminWebhookService {
       return false;
     }
 
+    // Garmin Webhook 필드 확인
     const hasAnyGarminField =
       payload.userId ||
       payload.userAccessToken ||
@@ -215,6 +245,20 @@ export class GarminWebhookService {
       payload.fileType ||
       payload.callbackURL ||
       payload.activities ||
+      payload.activityDetails || // Activity Details Webhook
+      payload.dailies || // Daily Summaries Webhook
+      payload.epochs || // Epoch Summaries Webhook
+      payload.sleeps || // Sleep Summaries Webhook
+      payload.bodyComps || // Body Composition Webhook
+      payload.stressDetails || // Stress Details Webhook
+      payload.userMetrics || // User Metrics Webhook
+      payload.pulseox || // Pulse Ox Webhook
+      payload.allDayRespiration || // Respiration Webhook
+      payload.healthSnapshot || // Health Snapshot Webhook
+      payload.hrv || // HRV Webhook
+      payload.bloodPressures || // Blood Pressure Webhook
+      payload.skinTemp || // Skin Temperature Webhook
+      payload.deregistrations || // Deregistration Webhook
       Array.isArray(payload);
 
     if (!hasAnyGarminField) {
