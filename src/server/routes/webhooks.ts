@@ -52,15 +52,16 @@ const createWebhookHandler = (webhookType: string) => {
       );
 
       // 3. 비동기 처리 (즉시 200 응답 반환)
-      console.log(`⚡ [${webhookType}] Starting async processing...`);
+      console.log(`⚡ [${webhookType}] Starting async processing for webhook ${webhook.id}...`);
       garminWebhookService.processWebhook(webhook.id).catch((error) => {
         console.error(
-          `❌ [${webhookType}] Failed to process webhook:`,
+          `❌❌❌ [${webhookType}] WEBHOOK PROCESSING FAILED for ${webhook.id}:`,
           error instanceof Error ? error.message : error
         );
         if (error instanceof Error && error.stack) {
-          console.error(`💥 [${webhookType}] Stack trace:`, error.stack);
+          console.error(`💥💥💥 [${webhookType}] Stack trace:`, error.stack);
         }
+        console.error(`🔍 [${webhookType}] Full error object:`, JSON.stringify(error, Object.getOwnPropertyNames(error)));
       });
 
       // 4. Garmin에 성공 응답

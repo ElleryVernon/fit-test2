@@ -150,27 +150,33 @@ export class GarminWebhookService {
    * Webhook 처리
    */
   async processWebhook(webhookId: string) {
+    console.log(`[processWebhook] 🚀 Starting to process webhook ${webhookId}`);
+
     const webhook = await prisma.webhookLog.findUnique({
       where: { id: webhookId },
     });
 
     if (!webhook) {
-      console.error("Webhook not found:", webhookId);
+      console.error(`[processWebhook] ❌ Webhook not found: ${webhookId}`);
       return;
     }
 
+    console.log(`[processWebhook] Webhook found: type=${webhook.type}, status=${webhook.status}`);
+
     if (webhook.status !== "pending") {
-      console.log("Webhook already processed:", webhookId);
+      console.log(`[processWebhook] Webhook already processed: ${webhookId} (status: ${webhook.status})`);
       return;
     }
 
     try {
+      console.log(`[processWebhook] Updating status to 'processing'...`);
       await prisma.webhookLog.update({
         where: { id: webhookId },
         data: { status: "processing" },
       });
 
       const payload = webhook.payload as GarminWebhookPayload;
+      console.log(`[processWebhook] Processing webhook type: ${webhook.type}`);
 
       switch (webhook.type) {
         case WEBHOOK_TYPES.ACTIVITIES:
