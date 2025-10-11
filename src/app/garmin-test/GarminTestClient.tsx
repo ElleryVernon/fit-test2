@@ -64,14 +64,14 @@ export default function GarminTestClient({
   const [apiResponses, setApiResponses] = useState<Record<string, ApiResponse>>(
     {}
   );
-  
+
   // 초기 탭 설정: 연결 상태에 따라 자동 결정
   const getInitialTab = () => {
     if (!initialUser) return "auth";
     if (initialConnectionStatus?.connected) return "apis";
     return "garmin";
   };
-  
+
   const [activeTab, setActiveTab] = useState<"auth" | "garmin" | "apis">(
     getInitialTab()
   );
