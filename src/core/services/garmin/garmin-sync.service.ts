@@ -98,9 +98,25 @@ export class GarminSyncService {
           return response;
         }
 
+        // 에러 응답 상세 로깅
+        const errorText = await response.text();
+        console.error(
+          `[GarminSync] API error ${response.status}:`,
+          errorText
+        );
+
         // 401/403은 재시도하지 않음 (토큰 만료)
         if (response.status === 401 || response.status === 403) {
-          throw new Error(`Authentication failed: ${response.status}`);
+          throw new Error(
+            `Authentication failed: ${response.status} - ${errorText}`
+          );
+        }
+
+        // 400 에러 (잘못된 요청)
+        if (response.status === 400) {
+          throw new Error(
+            `Bad request: ${response.status} - ${errorText}`
+          );
         }
 
         // 5xx 에러는 재시도
@@ -112,7 +128,7 @@ export class GarminSyncService {
           continue;
         }
 
-        throw new Error(`Garmin API error: ${response.status}`);
+        throw new Error(`Garmin API error: ${response.status} - ${errorText}`);
       } catch (error) {
         if (attempt === retries) {
           throw error;
@@ -228,28 +244,32 @@ export class GarminSyncService {
       const activities: GarminActivity[] = Array.isArray(dailies)
         ? dailies
             .filter((daily) => daily.steps > 0 || daily.activeKilocalories > 0) // 활동이 있는 날만
-            .map((daily): GarminActivity => ({
-              summaryId: daily.summaryId,
-              activityName: `Daily Activity - ${daily.calendarDate}`,
-              activityType: daily.activityType || "WALKING",
-              startTimeInSeconds: daily.startTimeInSeconds,
-              durationInSeconds:
-                daily.activeTimeInSeconds || daily.durationInSeconds,
-              distanceInMeters: daily.distanceInMeters,
-              activeKilocalories: daily.activeKilocalories,
-              averageHeartRateInBeatsPerMinute:
-                daily.averageHeartRateInBeatsPerMinute,
-              maxHeartRateInBeatsPerMinute: daily.maxHeartRateInBeatsPerMinute,
-              minHeartRateInBeatsPerMinute: daily.minHeartRateInBeatsPerMinute,
-              steps: daily.steps,
-              moderateIntensityDurationInSeconds:
-                daily.moderateIntensityDurationInSeconds,
-              vigorousIntensityDurationInSeconds:
-                daily.vigorousIntensityDurationInSeconds,
-              floorsClimbed: daily.floorsClimbed,
-              isManual: false,
-              calendarDate: daily.calendarDate,
-            }))
+            .map(
+              (daily): GarminActivity => ({
+                summaryId: daily.summaryId,
+                activityName: `Daily Activity - ${daily.calendarDate}`,
+                activityType: daily.activityType || "WALKING",
+                startTimeInSeconds: daily.startTimeInSeconds,
+                durationInSeconds:
+                  daily.activeTimeInSeconds || daily.durationInSeconds,
+                distanceInMeters: daily.distanceInMeters,
+                activeKilocalories: daily.activeKilocalories,
+                averageHeartRateInBeatsPerMinute:
+                  daily.averageHeartRateInBeatsPerMinute,
+                maxHeartRateInBeatsPerMinute:
+                  daily.maxHeartRateInBeatsPerMinute,
+                minHeartRateInBeatsPerMinute:
+                  daily.minHeartRateInBeatsPerMinute,
+                steps: daily.steps,
+                moderateIntensityDurationInSeconds:
+                  daily.moderateIntensityDurationInSeconds,
+                vigorousIntensityDurationInSeconds:
+                  daily.vigorousIntensityDurationInSeconds,
+                floorsClimbed: daily.floorsClimbed,
+                isManual: false,
+                calendarDate: daily.calendarDate,
+              })
+            )
         : [];
 
       if (!Array.isArray(activities) || activities.length === 0) {
