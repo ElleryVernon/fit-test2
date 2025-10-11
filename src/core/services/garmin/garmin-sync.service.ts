@@ -217,7 +217,7 @@ export class GarminSyncService {
         accessToken
       );
 
-      const dailies = await response.json();
+      const dailies: GarminDailySummary[] = await response.json();
       console.log(
         `[GarminSync] Received ${
           Array.isArray(dailies) ? dailies.length : 0
@@ -228,7 +228,7 @@ export class GarminSyncService {
       const activities: GarminActivity[] = Array.isArray(dailies)
         ? dailies
             .filter((daily) => daily.steps > 0 || daily.activeKilocalories > 0) // 활동이 있는 날만
-            .map((daily) => ({
+            .map((daily): GarminActivity => ({
               summaryId: daily.summaryId,
               activityName: `Daily Activity - ${daily.calendarDate}`,
               activityType: daily.activityType || "WALKING",
