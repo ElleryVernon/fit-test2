@@ -168,7 +168,7 @@ export default function GarminTestClient({
   const connectGarmin = () => {
     if (!user) return;
     // 가민 OAuth 페이지로 이동
-    window.location.href = `/api/auth/garmin/start?user_id=${user.id}`;
+    window.location.href = `/api/garmin/oauth/start?user_id=${user.id}`;
   };
 
   const disconnectGarmin = async () => {

@@ -20,6 +20,6 @@ export const garminConfig = {
     deregistrationUrl: "/registration",
   },
   callbackUrl:
-    process.env.NEXT_PUBLIC_BASE_URL + "/api/auth/garmin/callback" ||
-    "http://localhost:3000/api/auth/garmin/callback",
+    process.env.NEXT_PUBLIC_BASE_URL + "/api/garmin/oauth/callback" ||
+    "http://localhost:3000/api/garmin/oauth/callback",
 } as const;

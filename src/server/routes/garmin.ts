@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { prisma } from "@/lib/db/client";
 import { garminOAuthService, garminSyncService } from "@/core/services";
+import { garminConfig } from "@/config";
 
 // 통계 계산용 타입
 type Activity = {
@@ -151,6 +152,189 @@ function calculateTrends(activities: Activity[]) {
  * Garmin API 라우트
  */
 export const garminRoutes = new Elysia({ prefix: "/garmin" })
+  // GET /api/garmin/oauth/start - Garmin OAuth 시작
+  .get(
+    "/oauth/start",
+    async ({ query }) => {
+      try {
+        const { user_id } = query;
+
+        if (!user_id) {
+          return new Response(
+            JSON.stringify({ error: "user_id is required" }),
+            { status: 400 }
+          );
+        }
+
+        // OAuth 2.0 PKCE를 위한 state와 code challenge 생성
+        const { state, codeChallenge } =
+          await garminOAuthService.generateOAuthState(user_id);
+
+        // Garmin OAuth 2.0 URL 생성
+        const authUrl = garminOAuthService.buildGarminAuthUrl(
+          state,
+          codeChallenge
+        );
+
+        console.log("Starting Garmin OAuth 2.0 PKCE for user:", user_id);
+        console.log("Redirect URL:", authUrl);
+
+        // 302 리다이렉트
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: authUrl,
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+          },
+        });
+      } catch (error) {
+        console.error("Failed to start Garmin OAuth:", error);
+        return new Response(
+          JSON.stringify({ error: "Failed to initialize authentication" }),
+          { status: 500 }
+        );
+      }
+    },
+    {
+      query: t.Object({
+        user_id: t.String(),
+      }),
+    }
+  )
+  // GET /api/garmin/oauth/callback - Garmin OAuth 콜백
+  .get(
+    "/oauth/callback",
+    async ({ query }) => {
+      console.log("🔗 [Garmin OAuth] Callback received");
+
+      try {
+        const code = query.code;
+        const state = query.state;
+        const error = query.error;
+
+        console.log("📝 [Garmin OAuth] Parameters:", {
+          code: code ? "present" : "missing",
+          state,
+          error,
+        });
+
+        const baseUrl =
+          process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+
+        // 에러가 있거나 사용자가 거부한 경우
+        if (error || !code) {
+          const errorMessage =
+            error || "User denied access or authorization code missing";
+          console.error("❌ [Garmin OAuth] Error:", errorMessage);
+
+          return new Response(null, {
+            status: 302,
+            headers: {
+              Location: `${baseUrl}/garmin-test?error=${encodeURIComponent(errorMessage)}`,
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+            },
+          });
+        }
+
+        // State 검증
+        if (!state) {
+          console.error("❌ [Garmin OAuth] No state parameter received");
+          return new Response(null, {
+            status: 302,
+            headers: {
+              Location: `${baseUrl}/garmin-test?error=${encodeURIComponent("Invalid state")}`,
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+            },
+          });
+        }
+
+        console.log("🔍 [Garmin OAuth] Verifying state:", state);
+        const stateData = await garminOAuthService.verifyOAuthState(state);
+        if (!stateData) {
+          console.error("❌ [Garmin OAuth] Invalid or expired state:", state);
+          return new Response(null, {
+            status: 302,
+            headers: {
+              Location: `${baseUrl}/garmin-test?error=${encodeURIComponent("Invalid or expired state")}`,
+              "Cache-Control": "no-cache, no-store, must-revalidate",
+            },
+          });
+        }
+
+        const { userId, codeVerifier } = stateData;
+        console.log("✅ [Garmin OAuth] State verified for user:", userId);
+
+        // OAuth 2.0 토큰 교환
+        console.log("🔄 [Garmin OAuth] Exchanging tokens for user:", userId);
+        const redirectUri = `${baseUrl}/api/garmin/oauth/callback`;
+        console.log("🔗 [Garmin OAuth] Redirect URI:", redirectUri);
+
+        const tokens = await garminOAuthService.exchangeCodeForTokens(
+          code,
+          codeVerifier,
+          redirectUri
+        );
+        console.log("✅ [Garmin OAuth] Tokens received");
+
+        // 연결 정보 저장
+        console.log("💾 [Garmin OAuth] Saving connection for user:", userId);
+        await garminOAuthService.saveGarminConnection(
+          userId,
+          tokens.access_token,
+          tokens.refresh_token,
+          tokens.expires_in
+        );
+
+        console.log("✅ [Garmin OAuth] Connection saved for user:", userId);
+
+        // 성공 리다이렉트
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: `${baseUrl}/garmin-test?success=true&user_id=${userId}`,
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+          },
+        });
+      } catch (error) {
+        console.error("❌ [Garmin OAuth] Callback error:", error);
+        console.error(
+          "❌ [Garmin OAuth] Error stack:",
+          error instanceof Error ? error.stack : "No stack trace"
+        );
+
+        // 에러 메시지 구성
+        let errorMessage = "Unknown error";
+        if (error instanceof Error) {
+          errorMessage = `${error.name}: ${error.message}`;
+          if (error.message.includes("Failed to fetch")) {
+            errorMessage += " (Network issue - check Garmin API connection)";
+          } else if (error.message.includes("Token exchange failed")) {
+            errorMessage += " (Check Garmin client credentials)";
+          } else if (error.message.includes("Invalid state")) {
+            errorMessage += " (OAuth state expired or invalid)";
+          }
+        }
+
+        const baseUrl =
+          process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: `${baseUrl}/garmin-test?error=${encodeURIComponent(errorMessage)}`,
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+          },
+        });
+      }
+    },
+    {
+      query: t.Object({
+        code: t.Optional(t.String()),
+        state: t.Optional(t.String()),
+        error: t.Optional(t.String()),
+      }),
+    }
+  )
   // GET /api/garmin/connection-status
   .get(
     "/connection-status",
