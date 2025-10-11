@@ -178,7 +178,7 @@ export class GarminSyncService {
       // 먼저 간단한 GET 방식 시도
       let response: Response;
       let data: GarminActivity[] | { activities: GarminActivity[] };
-      
+
       try {
         // 방법 1: GET /activities (일반 API 스타일)
         response = await this.garminFetchWithRetry(
@@ -189,7 +189,9 @@ export class GarminSyncService {
         console.log("[GarminSync] Used GET /activities endpoint");
       } catch (error) {
         // 방법 2: POST /backfill/activities (Backfill API)
-        console.log("[GarminSync] GET failed, trying POST /backfill/activities");
+        console.log(
+          "[GarminSync] GET failed, trying POST /backfill/activities"
+        );
         const backfillResponse = await fetch(
           `${garminConfig.api.baseUrl}/backfill/activities`,
           {
@@ -204,11 +206,11 @@ export class GarminSyncService {
             }),
           }
         );
-        
+
         if (!backfillResponse.ok) {
           throw new Error(`Backfill API error: ${backfillResponse.status}`);
         }
-        
+
         data = await backfillResponse.json();
         console.log("[GarminSync] Used POST /backfill/activities endpoint");
       }

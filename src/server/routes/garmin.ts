@@ -271,22 +271,54 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         const offsetNum = parseInt(offset);
         const shouldForceSync = force_sync === "true";
 
-        // 백그라운드 동기화 (10분 TTL 기반)
+        // 스마트 동기화: 데이터가 오래되었으면 가민 API에서 가져오기 (블로킹)
+        let syncStatus: { synced?: number; status: string } | null = null;
+        
         if (shouldForceSync || offsetNum === 0) {
           // 첫 페이지 로드 시에만 동기화 체크
           const validation = await garminSyncService.validateConnection(
             user_id
           );
-          if (validation.valid && validation.connection) {
-            const isStale = await garminSyncService.isDataStale(user_id);
-            if (isStale || shouldForceSync) {
-              // 논블로킹 동기화
-              garminSyncService
-                .syncInBackground(user_id, validation.connection.accessToken)
-                .catch((err) =>
-                  console.error("[API] Activities sync error:", err)
-                );
+          
+          if (!validation.valid || !validation.connection) {
+            set.status = 401;
+            return {
+              error: "Garmin connection invalid or expired",
+              needs_reauth: true,
+              message: "Please reconnect your Garmin account",
+            };
+          }
+
+          const isStale = await garminSyncService.isDataStale(user_id);
+          
+          if (isStale || shouldForceSync) {
+            console.log(
+              `[API] Data is stale, syncing from Garmin API for user ${user_id}`
+            );
+
+            // 블로킹 동기화: 결과를 기다림
+            syncStatus = await garminSyncService.syncActivities(
+              user_id,
+              validation.connection.accessToken,
+              {
+                startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+              }
+            );
+
+            // 동기화 실패 시 에러 반환
+            if (syncStatus.status === "error") {
+              set.status = 503;
+              return {
+                error: "Failed to sync activities from Garmin API",
+                message:
+                  "Could not fetch latest data from Garmin. Please try again later.",
+                has_cached_data: true,
+              };
             }
+
+            console.log(
+              `[API] Sync completed: ${syncStatus.synced} activities synced`
+            );
           }
         }
 
@@ -373,6 +405,16 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
             offset: offsetNum,
             has_more: activities.length === limitNum,
           },
+          sync_info: syncStatus
+            ? {
+                synced: syncStatus.synced,
+                status: syncStatus.status,
+                freshly_synced: true,
+              }
+            : {
+                freshly_synced: false,
+                message: "Using cached data (< 10 minutes old)",
+              },
         };
       } catch (error) {
         console.error("Activities fetch error:", error);
@@ -646,15 +688,38 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         startDate.setDate(startDate.getDate() - days);
         const shouldForceSync = force_sync === "true";
 
-        // 백그라운드 동기화 (10분 TTL 기반)
+        // 스마트 동기화: 통계 조회 전에 최신 데이터 확인
         const validation = await garminSyncService.validateConnection(user_id);
-        if (validation.valid && validation.connection) {
-          const isStale = await garminSyncService.isDataStale(user_id);
-          if (isStale || shouldForceSync) {
-            // 논블로킹 동기화
-            garminSyncService
-              .syncInBackground(user_id, validation.connection.accessToken)
-              .catch((err) => console.error("[API] Stats sync error:", err));
+        
+        if (!validation.valid || !validation.connection) {
+          set.status = 401;
+          return {
+            error: "Garmin connection invalid or expired",
+            needs_reauth: true,
+          };
+        }
+
+        const isStale = await garminSyncService.isDataStale(user_id);
+        
+        if (isStale || shouldForceSync) {
+          console.log(
+            `[API] Syncing activities for stats (user: ${user_id})`
+          );
+
+          // 블로킹 동기화
+          const syncResult = await garminSyncService.syncActivities(
+            user_id,
+            validation.connection.accessToken,
+            {
+              startDate: new Date(startDate.getTime() - days * 24 * 60 * 60 * 1000),
+            }
+          );
+
+          if (syncResult.status === "error") {
+            console.warn(
+              `[API] Sync failed for stats, using cached data if available`
+            );
+            // 통계는 오래된 데이터라도 보여줌 (경고와 함께)
           }
         }
 
