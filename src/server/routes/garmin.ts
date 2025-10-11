@@ -259,7 +259,6 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           start_date,
           end_date,
           activity_type,
-          force_sync = "false",
         } = query;
 
         if (!user_id) {
@@ -641,7 +640,7 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
     "/stats",
     async ({ query, set }) => {
       try {
-        const { user_id, period = "7", force_sync = "false" } = query;
+        const { user_id, period = "7" } = query;
 
         if (!user_id) {
           set.status = 400;
