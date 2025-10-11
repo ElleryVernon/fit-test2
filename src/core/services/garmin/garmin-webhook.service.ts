@@ -19,6 +19,16 @@ type GarminWebhookPayload = {
     summary: Record<string, unknown>;
     samples?: Array<Record<string, unknown>>;
   }>;
+  moveIQActivities?: Array<{
+    userId: string;
+    summaryId: string;
+    calendarDate: string;
+    startTimeInSeconds: number;
+    durationInSeconds: number;
+    activityType: string;
+    activitySubType?: string;
+    offsetInSeconds: number;
+  }>;
   dailies?: Array<Record<string, unknown>>;
   epochs?: Array<Record<string, unknown>>;
   sleeps?: Array<Record<string, unknown>>;
@@ -263,15 +273,48 @@ export class GarminWebhookService {
           break;
 
         case WEBHOOK_TYPES.MOVEIQ:
-          // MoveIQ Push Webhook
-          if (Array.isArray(payload.activities)) {
-            for (const activity of payload.activities) {
-              await this.saveActivity(
-                payload.userId,
-                activity as Record<string, unknown>,
-                false,
-                true
+          // MoveIQ Push Webhook (자동 활동 감지)
+          if (Array.isArray(payload.moveIQActivities)) {
+            console.log(
+              `[Webhook] Processing ${payload.moveIQActivities.length} MoveIQ activities`
+            );
+
+            for (const moveIQ of payload.moveIQActivities) {
+              console.log(
+                `[Webhook] Processing MoveIQ ${moveIQ.activityType}${moveIQ.activitySubType ? ` (${moveIQ.activitySubType})` : ""} for user ${moveIQ.userId}`
               );
+
+              try {
+                // MoveIQ 데이터를 Activity 형식으로 변환
+                const activityData: Record<string, unknown> = {
+                  summaryId: moveIQ.summaryId,
+                  activityName: moveIQ.activitySubType
+                    ? `${moveIQ.activityType} - ${moveIQ.activitySubType}`
+                    : moveIQ.activityType,
+                  activityType: moveIQ.activityType,
+                  startTimeInSeconds: moveIQ.startTimeInSeconds,
+                  durationInSeconds: moveIQ.durationInSeconds,
+                  startTimeOffsetInSeconds: moveIQ.offsetInSeconds,
+                  calendarDate: moveIQ.calendarDate,
+                };
+
+                const saved = await this.saveActivity(
+                  moveIQ.userId,
+                  activityData,
+                  false,
+                  true // isAutoDetected = true (MoveIQ는 자동 감지)
+                );
+
+                console.log(
+                  `[Webhook] ✅ MoveIQ activity saved: ${saved.garminActivityId}`
+                );
+              } catch (error) {
+                console.error(
+                  `[Webhook] ❌ Failed to save MoveIQ activity:`,
+                  error
+                );
+                throw error;
+              }
             }
           }
           break;
@@ -338,6 +381,7 @@ export class GarminWebhookService {
       payload.callbackURL ||
       payload.activities ||
       payload.activityDetails || // Activity Details Webhook
+      payload.moveIQActivities || // MoveIQ Webhook
       payload.dailies || // Daily Summaries Webhook
       payload.epochs || // Epoch Summaries Webhook
       payload.sleeps || // Sleep Summaries Webhook

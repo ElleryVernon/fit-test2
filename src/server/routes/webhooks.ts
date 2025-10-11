@@ -53,7 +53,7 @@ const createWebhookHandler = (webhookType: string) => {
 
       // 3. 동기 처리 (Vercel 서버리스 환경에서 await 필수!)
       console.log(`⚡ [${webhookType}] Processing webhook synchronously...`);
-      
+
       try {
         await garminWebhookService.processWebhook(webhook.id);
         console.log(`✅ [${webhookType}] Webhook processing completed`);
@@ -75,9 +75,7 @@ const createWebhookHandler = (webhookType: string) => {
 
       // 4. Garmin에 성공 응답
       const processingTime = Date.now() - startTime;
-      console.log(
-        `🎉 [${webhookType}] Webhook handled in ${processingTime}ms`
-      );
+      console.log(`🎉 [${webhookType}] Webhook handled in ${processingTime}ms`);
 
       // CORS 헤더 설정
       set.headers["Access-Control-Allow-Origin"] = "*";
