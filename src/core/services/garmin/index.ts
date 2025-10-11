@@ -5,3 +5,4 @@
 export * from "./garmin-api.service";
 export * from "./garmin-oauth.service";
 export * from "./garmin-webhook.service";
+export * from "./garmin-sync.service";

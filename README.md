@@ -215,13 +215,16 @@ function MyComponent() {
 
 ### Garmin API (Elysia)
 
-- `GET /api/garmin/connection-status` - 연결 상태 조회
-- `GET /api/garmin/activities` - 활동 목록 조회 (페이지네이션, 필터링 지원)
-- `GET /api/garmin/stats` - 통계 조회 (기간별 통계, 트렌드 분석)
+- `GET /api/garmin/connection-status` - 연결 상태 조회 (**자동 동기화**)
+- `GET /api/garmin/activities` - 활동 목록 조회 (페이지네이션, 필터링, **자동 동기화**)
+- `GET /api/garmin/stats` - 통계 조회 (기간별 통계, 트렌드 분석, **자동 동기화**)
+- `POST /api/garmin/sync` - ⚡ **NEW!** 수동 동기화 (즉시 실행)
 - `GET /api/garmin/user-id` - Garmin 사용자 ID 조회
 - `GET /api/garmin/permissions` - 권한 조회
 - `POST /api/garmin/disconnect` - 연결 해제
 - `PUT /api/garmin/disconnect` - Soft disconnect (재인증 필요)
+
+**자동 동기화**: 10분 TTL 기반으로 백그라운드에서 자동으로 가민 API 데이터 갱신
 
 ### Auth/OAuth API (Elysia)
 
@@ -288,7 +291,8 @@ bun run export
 
 ## 📚 추가 문서
 
-- [성능 최적화 가이드](./PERFORMANCE_OPTIMIZATION.md) - ⚡ **NEW!** 로그인 성능 개선 전략 및 적용 방법
+- [성능 최적화 가이드](./PERFORMANCE_OPTIMIZATION.md) - ⚡ 로그인 성능 개선 전략 및 적용 방법
+- [Garmin 자동 동기화 가이드](./GARMIN_SYNC_GUIDE.md) - 🔄 **NEW!** 10분 TTL 기반 스마트 캐싱 전략
 - [Elysia API 마이그레이션 가이드](./ELYSIA_MIGRATION.md) - Elysia 프레임워크 통합 및 성능 최적화
 - [프로젝트 구조 가이드](./PROJECT_STRUCTURE.md) - 상세한 프로젝트 구조 및 아키텍처 설명
 - [마이그레이션 가이드](./MIGRATION_GUIDE.md) - Supabase에서 Better Auth + Prisma로의 마이그레이션

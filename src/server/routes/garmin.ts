@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { prisma } from "@/lib/db/client";
-import { garminOAuthService } from "@/core/services";
+import { garminOAuthService, garminSyncService } from "@/core/services";
 
 // 통계 계산용 타입
 type Activity = {
@@ -164,11 +164,12 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         }
 
         // 연결 정보와 최근 활동 수를 병렬로 조회 (성능 개선)
-        const [connection, activityCount] = await Promise.all([
+        const [connection, activityCount, latestActivity] = await Promise.all([
           prisma.garminConnection.findFirst({
             where: { userId: user_id },
             select: {
               garminUserId: true,
+              accessToken: true,
               needsReauth: true,
               scopes: true,
               createdAt: true,
@@ -184,6 +185,11 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
               },
             },
           }),
+          prisma.garminActivity.findFirst({
+            where: { userId: user_id },
+            orderBy: { createdAt: "desc" },
+            select: { createdAt: true },
+          }),
         ]);
 
         if (!connection) {
@@ -198,6 +204,21 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           ? new Date(connection.tokenExpiresAt) < new Date()
           : false;
 
+        // 데이터 신선도 체크 (10분)
+        const dataAge = latestActivity
+          ? Date.now() - latestActivity.createdAt.getTime()
+          : Infinity;
+        const isStale = dataAge > 10 * 60 * 1000; // 10분
+
+        // 데이터가 오래되었고 토큰이 유효하면 백그라운드 동기화
+        if (isStale && !tokenExpired && !connection.needsReauth) {
+          garminSyncService
+            .syncInBackground(user_id, connection.accessToken)
+            .catch((err) =>
+              console.error("[API] Background sync error:", err)
+            );
+        }
+
         // 캐싱 헤더 추가
         set.headers["Cache-Control"] =
           "public, s-maxage=30, stale-while-revalidate=60";
@@ -210,6 +231,13 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           connected_at: connection.createdAt,
           last_updated: connection.updatedAt,
           recent_activities: activityCount,
+          data_freshness: {
+            is_stale: isStale,
+            last_sync: latestActivity?.createdAt,
+            age_minutes: latestActivity
+              ? Math.floor(dataAge / 60000)
+              : null,
+          },
         };
       } catch (error) {
         console.error("Connection status error:", error);
@@ -235,6 +263,7 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
           start_date,
           end_date,
           activity_type,
+          force_sync = "false",
         } = query;
 
         if (!user_id) {
@@ -244,6 +273,27 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
 
         const limitNum = parseInt(limit);
         const offsetNum = parseInt(offset);
+        const shouldForceSync = force_sync === "true";
+
+        // 백그라운드 동기화 (10분 TTL 기반)
+        if (shouldForceSync || offsetNum === 0) {
+          // 첫 페이지 로드 시에만 동기화 체크
+          const validation = await garminSyncService.validateConnection(user_id);
+          if (validation.valid && validation.connection) {
+            const isStale = await garminSyncService.isDataStale(user_id);
+            if (isStale || shouldForceSync) {
+              // 논블로킹 동기화
+              garminSyncService
+                .syncInBackground(
+                  user_id,
+                  validation.connection.accessToken
+                )
+                .catch((err) =>
+                  console.error("[API] Activities sync error:", err)
+                );
+            }
+          }
+        }
 
         // 쿼리 조건 빌드
         const whereConditions: Record<string, unknown> = {
@@ -343,6 +393,7 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         start_date: t.Optional(t.String()),
         end_date: t.Optional(t.String()),
         activity_type: t.Optional(t.String()),
+        force_sync: t.Optional(t.String()),
       }),
     }
   )
@@ -588,7 +639,7 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
     "/stats",
     async ({ query, set }) => {
       try {
-        const { user_id, period = "7" } = query;
+        const { user_id, period = "7", force_sync = "false" } = query;
 
         if (!user_id) {
           set.status = 400;
@@ -598,6 +649,21 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
         const days = parseInt(period);
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - days);
+        const shouldForceSync = force_sync === "true";
+
+        // 백그라운드 동기화 (10분 TTL 기반)
+        const validation = await garminSyncService.validateConnection(user_id);
+        if (validation.valid && validation.connection) {
+          const isStale = await garminSyncService.isDataStale(user_id);
+          if (isStale || shouldForceSync) {
+            // 논블로킹 동기화
+            garminSyncService
+              .syncInBackground(user_id, validation.connection.accessToken)
+              .catch((err) =>
+                console.error("[API] Stats sync error:", err)
+              );
+          }
+        }
 
         // 기간 내 활동 조회 (필요한 필드만 선택하여 성능 개선)
         const activities = await prisma.garminActivity.findMany({
@@ -727,6 +793,72 @@ export const garminRoutes = new Elysia({ prefix: "/garmin" })
       query: t.Object({
         user_id: t.String(),
         period: t.Optional(t.String()),
+        force_sync: t.Optional(t.String()),
+      }),
+    }
+  )
+  // POST /api/garmin/sync - 수동 동기화 (즉시 실행)
+  .post(
+    "/sync",
+    async ({ body, set }) => {
+      try {
+        const { user_id, force = false } = body;
+
+        if (!user_id) {
+          set.status = 400;
+          return { error: "user_id is required" };
+        }
+
+        // 연결 검증
+        const validation = await garminSyncService.validateConnection(user_id);
+        if (!validation.valid || !validation.connection) {
+          set.status = 404;
+          return {
+            error: "No valid Garmin connection found",
+            needs_reauth: true,
+          };
+        }
+
+        // 신선도 확인
+        if (!force) {
+          const isStale = await garminSyncService.isDataStale(user_id);
+          if (!isStale) {
+            return {
+              message: "Data is already fresh (< 10 minutes old)",
+              synced: 0,
+              status: "skip",
+            };
+          }
+        }
+
+        console.log(
+          `[API] Manual sync requested for user ${user_id} (force: ${force})`
+        );
+
+        // 즉시 동기화 (블로킹)
+        const result = await garminSyncService.syncActivities(
+          user_id,
+          validation.connection.accessToken,
+          {
+            startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 최근 30일
+          }
+        );
+
+        return {
+          message: "Sync completed",
+          synced: result.synced,
+          status: result.status,
+        };
+      } catch (error) {
+        console.error("[API] Manual sync error:", error);
+        set.status = 500;
+        return { error: "Failed to sync data" };
+      }
+    },
+    {
+      body: t.Object({
+        user_id: t.String(),
+        force: t.Optional(t.Boolean()),
       }),
     }
   );
